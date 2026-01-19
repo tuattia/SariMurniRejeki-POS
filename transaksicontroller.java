@@ -1,0 +1,257 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
+package controller;
+
+/**
+ *
+ * @author attia
+ */import config.koneksi;
+import model.modeltransaksi;
+import model.modeltd;
+
+import java.sql.*;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import javax.swing.JOptionPane;
+import model.modellogt;
+import model.modelutang;
+
+public class transaksicontroller {
+
+    Connection con = koneksi.getConnection();
+    barangcontroller bc = new barangcontroller();
+
+    // ============================
+    // SIMPAN TRANSAKSI + DETAIL
+    // ============================
+public boolean simpanTransaksi(Connection con, modeltransaksi t,
+        List<modeltd> details) {
+
+    String sqlTransaksi =
+      "INSERT INTO transaksi(kode_transaksi, tanggal, nama_pelanggan, total, jenis_transaksi) " +
+      "VALUES(?,?,?,?,?)";
+
+    String sqlDetail =
+      "INSERT INTO detail_transaksi(kode_transaksi, kode_barang, harga, qty, subtotal) " +
+      "VALUES(?,?,?,?,?)";
+
+    try {
+        con.setAutoCommit(false);
+
+        // 1. SIMPAN HEADER
+        PreparedStatement psT = con.prepareStatement(sqlTransaksi);
+        psT.setString(1, t.getKodeTransaksi());
+        psT.setTimestamp(2, Timestamp.valueOf(t.getTanggal()));
+        psT.setString(3, t.getNamaPelanggan());
+        psT.setInt(4, t.getTotal());
+        psT.setString(5, t.getJenisTransaksi());
+        psT.executeUpdate();
+
+        // 2. SIMPAN DETAIL + UPDATE STOK
+        for (modeltd d : details) {
+
+            boolean stokOK =
+                bc.kurangiStok(d.getKodeBarang(), d.getQty());
+
+            if (!stokOK) {
+                con.rollback();
+                throw new Exception("Stok tidak cukup: " + d.getKodeBarang());
+            }
+
+            PreparedStatement psD = con.prepareStatement(sqlDetail);
+            psD.setString(1, t.getKodeTransaksi());
+            psD.setString(2, d.getKodeBarang());
+            psD.setInt(3, d.getHarga());
+            psD.setInt(4, d.getQty());
+            psD.setInt(5, d.getSubtotal());
+            psD.executeUpdate();
+        }
+
+        con.commit();
+        return true;
+
+    } catch (Exception e) {
+        try { con.rollback(); } catch (Exception ex) {}
+        e.printStackTrace();
+        return false;
+    } finally {
+        try { con.setAutoCommit(true); } catch (Exception e) {}
+    }
+}
+
+public void simpanUtang(Connection con, modelutang u) throws Exception {
+
+    String sql = "INSERT INTO utang "
+            + "(kode_utang, nama, alamat, telepon, harga_brng, dp, jumlah_cicilan, jatuh_tempo, status, kode_transaksi) "
+            + "VALUES (?,?,?,?,?,?,?,?,?,?)";
+
+    try (PreparedStatement ps = con.prepareStatement(sql)) {
+        ps.setString(1, u.getKdutang());
+        ps.setString(2, u.getNama());
+        ps.setString(3, u.getAlamat());
+        ps.setString(4, u.getTelepon());
+        ps.setInt(5, u.getHargabrng());
+        ps.setInt(6, u.getDp());
+        ps.setInt(7, u.getJumlahcicilan());
+        ps.setString(9, u.getStatus());
+        ps.setString(10, u.getKodeTransaksi());
+
+        // LocalDate -> SQL DATE
+        ps.setDate(8, java.sql.Date.valueOf(u.getJatuhTempo()));
+        ps.executeUpdate();
+    }
+}
+
+public boolean simpanLog(Connection con, modellogt lt) {
+
+    String sql = "INSERT INTO log_transaksi " +
+                 "(kode_transaksi, tanggal, nama_pelanggan, total, bayar, kembali, tipe_transaksi, keterangan) " +
+                 "VALUES (?,?,?,?,?,?,?,?)";
+
+    try (PreparedStatement ps = con.prepareStatement(sql)) {
+
+        ps.setString(1, lt.getKodeTransaksi());
+        ps.setTimestamp(2, Timestamp.valueOf(lt.getTanggal()));
+        ps.setString(3, lt.getNamaPelanggan());
+        ps.setInt(4, lt.getTotal());
+        ps.setInt(5, lt.getBayar());
+        ps.setInt(6, lt.getKembali());
+        ps.setString(7, lt.getTipeTransaksi());
+        ps.setString(8, lt.getKeterangan());
+
+        int result = ps.executeUpdate();
+        
+        return result > 0;
+    } catch (Exception e) {
+        e.printStackTrace();
+        return false; 
+    }
+}
+
+public boolean simpanSemua(
+        modeltransaksi t,
+        List<modeltd> details,
+        modellogt log,
+        modelutang utang) {
+
+
+    try {
+        con.setAutoCommit(false);
+
+        boolean okTransaksi = simpanTransaksi(con, t, details);
+        if (!okTransaksi) {
+            throw new Exception("Gagal simpan transaksi header / detail");
+        }
+
+        boolean okLog = simpanLog(con, log);
+        if (!okLog) {
+            throw new Exception("Gagal simpan log transaksi");
+        }
+
+        if (utang != null) {
+            simpanUtang(con, utang);
+        }
+
+        con.commit();
+        return true;
+
+    } catch (Exception e) {
+        try { con.rollback(); } catch (Exception ex) {}
+        JOptionPane.showMessageDialog(null,
+            "ERROR DATABASE:\n" + e.getMessage());
+        e.printStackTrace();
+        return false;
+
+    } finally {
+        try { con.setAutoCommit(true); } catch (Exception e) {}
+    }
+}
+
+    public String generateNoTransaksi() {
+
+    String prefix = "TRX" + java.time.LocalDate.now().toString().replace("-", "");
+    String sql = "SELECT COUNT(*) FROM transaksi WHERE no_transaksi LIKE ?";
+
+    try (PreparedStatement ps = con.prepareStatement(sql)) {
+        ps.setString(1, prefix + "%");
+        ResultSet rs = ps.executeQuery();
+
+        if (rs.next()) {
+            int nomor = rs.getInt(1) + 1;
+            return prefix + "-" + String.format("%03d", nomor);
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+
+    return prefix + "-001";
+}
+
+    // ============================
+    // GET TRANSAKSI BY KODE
+    // ============================
+public modeltransaksi getByKode(String kode) {
+
+    modeltransaksi t = null;
+    String sql = "SELECT * FROM transaksi WHERE kode_transaksi=?";
+
+    try (PreparedStatement ps = con.prepareStatement(sql)) {
+
+        ps.setString(1, kode);
+        ResultSet rs = ps.executeQuery();
+
+        if (rs.next()) {
+            t = new modeltransaksi();
+            t.setIdTransaksi(rs.getInt("id_transaksi"));
+            t.setKodeTransaksi(rs.getString("kode_transaksi"));
+            t.setTanggal(rs.getTimestamp("tanggal").toLocalDateTime());
+            t.setNamaPelanggan(rs.getString("nama_pelanggan"));
+            t.setTotal(rs.getInt("total"));
+            t.setJenisTransaksi(rs.getString("jenis_transaksi"));
+        }
+
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    return t;
+}
+    
+public List<modeltd> getDetailByTransaksi(int idTransaksi) {
+
+    List<modeltd> list = new ArrayList<>();
+
+    String sql =
+      "SELECT d.*, b.nama_barang " +
+      "FROM detail_transaksi d " +
+      "JOIN barang b ON d.kode_barang = b.kode_barang " +
+      "WHERE d.id_transaksi=?";
+
+    try (PreparedStatement ps = con.prepareStatement(sql)) {
+
+        ps.setInt(1, idTransaksi);
+        ResultSet rs = ps.executeQuery();
+
+        while (rs.next()) {
+            modeltd d = new modeltd();
+            d.setIdDetail(rs.getInt("id_detail"));
+            d.setKodeTransaksi(rs.getString("kodeTransaksi"));
+            d.setKodeBarang(rs.getString("kode_barang"));
+            d.setHarga(rs.getInt("harga"));
+            d.setQty(rs.getInt("qty"));
+            d.setSubtotal(rs.getInt("subtotal"));
+
+            // nama_barang dipakai langsung di GUI
+            String namaBarang = rs.getString("nama_barang");
+
+            list.add(d);
+        }
+
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    return list;
+}
+}
