@@ -20,6 +20,7 @@ import java.sql.Connection;
 import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import javax.swing.JFrame;
 import model.modeltd;
 import model.modeltransaksi;
 
@@ -43,7 +44,7 @@ public class crudUtang extends javax.swing.JFrame {
      */
     public crudUtang() {
         initComponents();
-        this.setLocationRelativeTo(null);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
         initTable();
         generateKodeTransaksi();
         clearForm();
@@ -651,7 +652,7 @@ private List<modeltd> ambilDetail(String kodeTransaksi) {
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGap(24, 24, 24)
+                        .addGap(35, 35, 35)
                         .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(jPanel2Layout.createSequentialGroup()
                                 .addComponent(jButton5)
@@ -798,52 +799,92 @@ private List<modeltd> ambilDetail(String kodeTransaksi) {
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
-try{
-    String kodeTransaksi = txtKd.getText();
-    int total = hitungTotal();
+    Connection con = null;
+    try{
+        // VALIDASI 1: Cart tidak boleh kosong
+        if (tblkredit.getRowCount() == 0) {
+            JOptionPane. showMessageDialog(this, "Keranjang kredit masih kosong!  Tambah barang terlebih dahulu.");
+            return;
+        }
+        
+        // VALIDASI 2: Input form
+        if (txtNm.getText().isEmpty() || txtDp.getText().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Nama dan DP harus diisi!");
+            return;
+        }
+        
+        String kodeTransaksi = txtKd.getText();
+        int total = hitungTotal();
 
-    // 1. transaksi
-    modeltransaksi t = new modeltransaksi();
-    t.setKodeTransaksi(kodeTransaksi);
-    t.setNamaPelanggan(txtNm.getText());
-    t.setTotal(total);
-    t.setJenisTransaksi("KREDIT");
+        System.out.println("DEBUG: Starting save process. .");
+        System.out.println("Kode Transaksi: " + kodeTransaksi);
+        System.out.println("Total:  " + total);
+        System.out.println("Cart items: " + tblkredit. getRowCount());
 
-    // 2. detail
-    List<modeltd> detail = ambilDetail(kodeTransaksi);
+        // 1. transaksi
+        modeltransaksi t = new modeltransaksi();
+        t.setKodeTransaksi(kodeTransaksi);
+        t.setNamaPelanggan(txtNm.getText());
+        t.setTotal(total);
+        t.setJenisTransaksi("KREDIT");
+        t.setTanggal(java.time.LocalDateTime.now());
+        
+        System.out.println("DEBUG:  Transaksi model created");
 
-    // 3. utang
-    modelutang u = new modelutang();
-    u.setKdutang("UT-" + kodeTransaksi);
-    u.setNama(txtNm.getText());
-    u.setAlamat(txtAlt.getText());
-    u.setTelepon(txtTlp.getText());
-    u.setHargabrng(total);
-    u.setDp(Integer.parseInt(txtDp.getText()));
-    u.setJumlahcicilan(
-    Integer.parseInt(cmbJc.getSelectedItem().toString())
-    );
-    u.setJatuhTempo(LocalDate.parse(txtJt.getText().trim()));
-    u.setStatus("belum");
-    u.setKodeTransaksi(kodeTransaksi);
+        // 2. detail
+        List<modeltd> detail = ambilDetail(kodeTransaksi);
+        System.out.println("DEBUG: Detail items: " + detail.size());
+        
+        if (detail.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Detail transaksi kosong!");
+            return;
+        }
 
-    // 4. simpan semua
-    transaksicontroller ctrl = new transaksicontroller();
-    boolean sukses = ctrl.simpanSemua(t, detail, null, u);
+        // 3. utang
+        modelutang u = new modelutang();
+        u.setKdutang("UT-" + kodeTransaksi);
+        u.setNama(txtNm.getText());
+        u.setAlamat(txtAlt.getText());
+        u.setTelepon(txtTlp.getText());
+        u.setHargabrng(total);
+        u.setDp(Integer.parseInt(txtDp.getText()));
+        u.setJumlahcicilan(Integer.parseInt(cmbJc.getSelectedItem().toString()));
+        u.setJatuhTempo(LocalDate.parse(txtJt.getText().trim()));
+        u.setStatus("belum");
+        u.setKodeTransaksi(kodeTransaksi);
+        
+        System.out.println("DEBUG: Utang model created");
 
-    if (sukses) {
-        JOptionPane.showMessageDialog(this, "Transaksi Kredit Berhasil");
-        clearForm();
-    showTable();
-    } else {
-        JOptionPane.showMessageDialog(this, "Gagal menyimpan transaksi");
+        // 4. simpan semua
+        transaksicontroller ctrl = new transaksicontroller();
+        
+        System.out.println("DEBUG: About to call simpanSemua()");
+        boolean sukses = ctrl.simpanSemua(t, detail, null, u);
+        System.out.println("DEBUG: simpanSemua() returned: " + sukses);
+
+        if (sukses) {
+            JOptionPane.showMessageDialog(this, "Transaksi Kredit Berhasil Disimpan!");
+            clearForm();
+            showTable();
+        } else {
+            JOptionPane.showMessageDialog(this, "Gagal menyimpan transaksi.  Cek console untuk error detail.");
+        }
     }
-}
-     catch (Exception e) {
-    e.printStackTrace();
-    JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
-    
-}
+    catch (NumberFormatException e) {
+        System.out.println("ERROR:  Format number salah");
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Format input salah! (DP harus angka)");
+    }
+    catch (java.time.format.DateTimeParseException e) {
+        System.out.println("ERROR: Format tanggal salah");
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Format tanggal salah!  Gunakan format:  YYYY-MM-DD");
+    }
+    catch (Exception e) {
+        System.out. println("ERROR Exception di jButton5ActionPerformed:");
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Error:  " + e.getMessage());
+    }
     
 
     }//GEN-LAST:event_jButton5ActionPerformed
@@ -919,14 +960,15 @@ try{
     private void btnDetailActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDetailActionPerformed
     int row = Tableutang.getSelectedRow();
 
+    System.out.println("Row terpilih: " + row);
     if (row == -1) {
         JOptionPane.showMessageDialog(this, "Pilih satu data terlebih dahulu");
         return;
     }
 
-    String kodeUtang = Tableutang.getValueAt(row, 0).toString();
-
-    modelutang mu = uc.getByKode(kodeUtang);
+    String kode_utang = Tableutang.getValueAt(row, 0).toString();
+        System.out.println("Kode transaksi: " + kode_utang);
+    modelutang mu = uc.getByKode(kode_utang);
 
     if (mu == null) {
         JOptionPane.showMessageDialog(this, "Data tidak ditemukan");
@@ -951,6 +993,7 @@ try{
     private void utangbuttonMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_utangbuttonMouseClicked
         crudUtang cu = new crudUtang();
         cu.setVisible(true);
+        this.dispose(); 
     }//GEN-LAST:event_utangbuttonMouseClicked
 
     private void jLabel12MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel12MousePressed

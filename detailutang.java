@@ -32,29 +32,37 @@ public class detailutang extends javax.swing.JFrame {
     public detailutang() {
         initComponents();
         this.setLocationRelativeTo(null);
+        setUkuranFrame15x20();
     }
     
     public detailutang(modelutang mu){
     initComponents();
-    setUkuran5R();
+    setUkuranFrame15x20();
+    print15x20();
     loadHeader(mu);
     loadTableCicilan(mu);
     setLocationRelativeTo(null);
     }
     
-private void setUkuran5R() {
-    panelDetailutang.setPreferredSize(new Dimension(360, 504));
-    panelDetailutang.setMinimumSize(new Dimension(360, 504));
-    panelDetailutang.setMaximumSize(new Dimension(360, 504));
+    private void setUkuranFrame15x20() {
+    int lebar = 567;  // 15 cm
+    int tinggi = 756; // 20 cm
+
+    setSize(lebar, tinggi);
+    setPreferredSize(new Dimension(lebar, tinggi));
+    setResizable(false);
 }
-    private modelutang mu;
+private String formatRupiah(int nilai) {
+    return String.format("%,d", nilai).replace(',', '.');
+}
+private modelutang mu;
 private void loadHeader(modelutang mu) {
     lblKodeUtang.setText(mu.getKdutang());
     lblNama.setText(mu.getNama());
     lblAlamat.setText(mu.getAlamat());
     lblTelepon.setText(String.valueOf(mu.getTelepon()));
-    lblHarga.setText("Rp " + mu.getHargabrng());
-    lblDP.setText("Rp "+ mu.getDp());
+    lblHarga.setText("Rp " + formatRupiah(mu.getHargabrng()));
+    lblDP.setText("Rp "+ formatRupiah(mu.getDp()));
 }
 
 private void loadTableCicilan(modelutang mu) {
@@ -77,15 +85,15 @@ private void loadTableCicilan(modelutang mu) {
 
     int sisa = totalUtang;
 
-    for (int i = 1; i <= jumlahCicilan; i++) {
+    for (int i = 1; i <= 15; i++) {
 
         sisa -= nominalCicilan;
 
         Object[] row = new Object[]{
             i,
-            jatuhTempo.plusMonths(i),
-            nominalCicilan,
-            sisa,
+            jatuhTempo.plusMonths(i - 1),
+            formatRupiah(nominalCicilan),
+            formatRupiah(Math.max(sisa,0)),
             "" // Paraf dikosongkan
         };
 
@@ -96,36 +104,60 @@ private void loadTableCicilan(modelutang mu) {
 }
 
 
-private void print5R() {
+private void print15x20() {
+
     PrinterJob job = PrinterJob.getPrinterJob();
-    job.setJobName("Detail Utang");
+    job.setJobName("Detail Utang 15x20");
 
     PageFormat pf = job.defaultPage();
     Paper paper = new Paper();
 
-    paper.setSize(360, 504);
-    paper.setImageableArea(15, 15, 330, 474);
+    // === UKURAN 15 x 20 CM ===
+    double width = 425;   // 15 cm
+    double height = 567;  // 20 cm
+
+    paper.setSize(width, height);
+
+    // Margin aman
+    paper.setImageableArea(
+        20, 20,
+        width - 40,
+        height - 40
+    );
 
     pf.setPaper(paper);
     pf.setOrientation(PageFormat.PORTRAIT);
 
     job.setPrintable((graphics, pageFormat, pageIndex) -> {
+
         if (pageIndex > 0) return Printable.NO_SUCH_PAGE;
 
         Graphics2D g2d = (Graphics2D) graphics;
-        g2d.translate(
-            pageFormat.getImageableX(),
-            pageFormat.getImageableY()
-        );
 
-        double scaleX = pageFormat.getImageableWidth() / panelDetailutang.getWidth();
-        double scaleY = pageFormat.getImageableHeight() / panelDetailutang.getHeight();
+        double panelWidth = panelDetailutang.getWidth();
+        double panelHeight = panelDetailutang.getHeight();
+
+        double printableWidth = pageFormat.getImageableWidth();
+        double printableHeight = pageFormat.getImageableHeight();
+
+        // === SCALE OTOMATIS ===
+        double scaleX = printableWidth / panelWidth;
+        double scaleY = printableHeight / panelHeight;
         double scale = Math.min(scaleX, scaleY);
 
+        // === CENTER HORIZONTAL ===
+        double x = pageFormat.getImageableX()
+                + (printableWidth - panelWidth * scale) / 2;
+
+        double y = pageFormat.getImageableY();
+
+        g2d.translate(x, y);
         g2d.scale(scale, scale);
+
         panelDetailutang.printAll(g2d);
 
         return Printable.PAGE_EXISTS;
+
     }, pf);
 
     if (job.printDialog()) {
@@ -164,62 +196,62 @@ private void print5R() {
         tableCicilan = new javax.swing.JTable();
         jButton3 = new javax.swing.JButton();
         jButton4 = new javax.swing.JButton();
-        jLabel9 = new javax.swing.JLabel();
         jLabel1 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setPreferredSize(new java.awt.Dimension(567, 756));
 
         panelDetailutang.setBackground(new java.awt.Color(255, 255, 255));
         panelDetailutang.setPreferredSize(new java.awt.Dimension(360, 504));
         panelDetailutang.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
-        jLabel2.setFont(new java.awt.Font("Poppins", 0, 10)); // NOI18N
-        jLabel2.setText("Kode Barang  :");
-        panelDetailutang.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 110, -1, -1));
+        jLabel2.setFont(new java.awt.Font("Poppins", 0, 12)); // NOI18N
+        jLabel2.setText("Kode Transaksi :");
+        panelDetailutang.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 160, -1, -1));
 
-        jLabel3.setFont(new java.awt.Font("Poppins", 0, 10)); // NOI18N
+        jLabel3.setFont(new java.awt.Font("Poppins", 0, 12)); // NOI18N
         jLabel3.setText("Nama             :");
-        panelDetailutang.add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 130, -1, -1));
+        panelDetailutang.add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 180, -1, -1));
 
-        jLabel4.setFont(new java.awt.Font("Poppins", 0, 10)); // NOI18N
+        jLabel4.setFont(new java.awt.Font("Poppins", 0, 12)); // NOI18N
         jLabel4.setText("Telepon          :");
-        panelDetailutang.add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 170, -1, -1));
+        panelDetailutang.add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 220, -1, -1));
 
-        jLabel5.setFont(new java.awt.Font("Poppins", 0, 10)); // NOI18N
+        jLabel5.setFont(new java.awt.Font("Poppins", 0, 12)); // NOI18N
         jLabel5.setText("Alamat           :");
-        panelDetailutang.add(jLabel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 150, -1, -1));
+        panelDetailutang.add(jLabel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 200, -1, -1));
 
-        jLabel6.setFont(new java.awt.Font("Poppins", 0, 10)); // NOI18N
+        jLabel6.setFont(new java.awt.Font("Poppins", 0, 12)); // NOI18N
         jLabel6.setText("Dp                  :");
-        panelDetailutang.add(jLabel6, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 210, -1, -1));
+        panelDetailutang.add(jLabel6, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 260, -1, -1));
 
-        jLabel7.setFont(new java.awt.Font("Poppins", 0, 10)); // NOI18N
+        jLabel7.setFont(new java.awt.Font("Poppins", 0, 12)); // NOI18N
         jLabel7.setText("Harga Barang :");
-        panelDetailutang.add(jLabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 190, -1, -1));
+        panelDetailutang.add(jLabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 240, -1, -1));
 
-        lblKodeUtang.setFont(new java.awt.Font("Poppins", 0, 10)); // NOI18N
+        lblKodeUtang.setFont(new java.awt.Font("Poppins", 0, 12)); // NOI18N
         lblKodeUtang.setText("jLabel10");
-        panelDetailutang.add(lblKodeUtang, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 110, -1, -1));
+        panelDetailutang.add(lblKodeUtang, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 160, -1, -1));
 
-        lblNama.setFont(new java.awt.Font("Poppins", 0, 10)); // NOI18N
+        lblNama.setFont(new java.awt.Font("Poppins", 0, 12)); // NOI18N
         lblNama.setText("jLabel10");
-        panelDetailutang.add(lblNama, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 130, -1, -1));
+        panelDetailutang.add(lblNama, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 180, -1, -1));
 
-        lblTelepon.setFont(new java.awt.Font("Poppins", 0, 10)); // NOI18N
+        lblTelepon.setFont(new java.awt.Font("Poppins", 0, 12)); // NOI18N
         lblTelepon.setText("jLabel10");
-        panelDetailutang.add(lblTelepon, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 170, -1, -1));
+        panelDetailutang.add(lblTelepon, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 220, -1, -1));
 
-        lblAlamat.setFont(new java.awt.Font("Poppins", 0, 10)); // NOI18N
+        lblAlamat.setFont(new java.awt.Font("Poppins", 0, 12)); // NOI18N
         lblAlamat.setText("jLabel10");
-        panelDetailutang.add(lblAlamat, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 150, -1, -1));
+        panelDetailutang.add(lblAlamat, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 200, -1, -1));
 
-        lblDP.setFont(new java.awt.Font("Poppins", 0, 10)); // NOI18N
+        lblDP.setFont(new java.awt.Font("Poppins", 0, 12)); // NOI18N
         lblDP.setText("jLabel10");
-        panelDetailutang.add(lblDP, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 210, -1, -1));
+        panelDetailutang.add(lblDP, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 260, -1, -1));
 
-        lblHarga.setFont(new java.awt.Font("Poppins", 0, 10)); // NOI18N
+        lblHarga.setFont(new java.awt.Font("Poppins", 0, 12)); // NOI18N
         lblHarga.setText("jLabel10");
-        panelDetailutang.add(lblHarga, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 190, -1, -1));
+        panelDetailutang.add(lblHarga, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 240, -1, -1));
 
         tableCicilan.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -234,45 +266,36 @@ private void print5R() {
         ));
         jScrollPane1.setViewportView(tableCicilan);
 
-        panelDetailutang.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(19, 250, 319, 207));
+        panelDetailutang.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 300, 530, 270));
 
         jButton3.setText("Kembali");
         jButton3.addActionListener(this::jButton3ActionPerformed);
-        panelDetailutang.add(jButton3, new org.netbeans.lib.awtextra.AbsoluteConstraints(28, 475, -1, -1));
+        panelDetailutang.add(jButton3, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 580, -1, -1));
 
         jButton4.setText("Print");
         jButton4.addActionListener(this::jButton4ActionPerformed);
-        panelDetailutang.add(jButton4, new org.netbeans.lib.awtextra.AbsoluteConstraints(118, 475, -1, -1));
-
-        jLabel9.setIcon(new javax.swing.ImageIcon(getClass().getResource("/gui/1logosmrcrop.png"))); // NOI18N
-        panelDetailutang.add(jLabel9, new org.netbeans.lib.awtextra.AbsoluteConstraints(190, 10, -1, 100));
+        panelDetailutang.add(jButton4, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 580, -1, -1));
 
         jLabel1.setFont(new java.awt.Font("Poppins", 0, 18)); // NOI18N
         jLabel1.setText("SARI MURNI REJEKI");
-        panelDetailutang.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 10, -1, -1));
+        panelDetailutang.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(200, 40, -1, -1));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(panelDetailutang, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
+            .addComponent(panelDetailutang, javax.swing.GroupLayout.DEFAULT_SIZE, 549, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(panelDetailutang, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
+            .addComponent(panelDetailutang, javax.swing.GroupLayout.DEFAULT_SIZE, 756, Short.MAX_VALUE)
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
-        print5R();
+        print15x20();
     }//GEN-LAST:event_jButton4ActionPerformed
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
@@ -315,7 +338,6 @@ private void print5R() {
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
-    private javax.swing.JLabel jLabel9;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblAlamat;
     private javax.swing.JLabel lblDP;

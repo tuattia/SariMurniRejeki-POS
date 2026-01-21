@@ -764,6 +764,7 @@ private void loadTable() {
     private void stockbuttonMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_stockbuttonMouseClicked
     stock stok = new stock();
     stok.setVisible(true);
+    this.dispose();
     }//GEN-LAST:event_stockbuttonMouseClicked
 
     private void txtjumlahActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtjumlahActionPerformed

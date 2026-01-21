@@ -7,6 +7,7 @@ package gui;
 
 import controller.logtcontroller;
 import java.util.List;
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import model.modellogt;
@@ -29,7 +30,7 @@ public class logtransaksi extends javax.swing.JFrame {
         initComponents();
         initTable();
         loadData();
-        setLocationRelativeTo(null);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
     }
 
 private void initTable() {

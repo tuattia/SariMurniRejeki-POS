@@ -145,14 +145,14 @@ public int deleteUtang(String kodeUtang) {
 
 
 
-public modelutang getByKode(String kodeUtang) {
+public modelutang getByKode(String kode_utang) {
 
     modelutang mu = null;
     String sql = "SELECT * FROM utang WHERE kode_utang = ?";
 
     try (PreparedStatement ps = con.prepareStatement(sql)) {
 
-        ps.setString(1, kodeUtang);
+        ps.setString(1, kode_utang);
         ResultSet rs = ps.executeQuery();
 
         if (rs.next()) {
