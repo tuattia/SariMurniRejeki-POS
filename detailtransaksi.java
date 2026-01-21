@@ -4,6 +4,24 @@
  */
 package gui;
 
+import java.awt.Dimension;
+import java.awt.Graphics2D;
+import java.awt.print.PageFormat;
+import java.awt.print.Paper;
+import java.awt.print.Printable;
+import java.awt.print.PrinterException;
+import java.awt.print.PrinterJob;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+import login.user;
+import model.modelbarang;
+import model.modellogt;
+import model.modeltd;
+import model.modeltransaksi;
+
 /**
  *
  * @author attia
@@ -15,10 +33,138 @@ public class detailtransaksi extends javax.swing.JFrame {
     /**
      * Creates new form detailtransaksi
      */
+    
     public detailtransaksi() {
-        initComponents();
+    initComponents();
+    setUkuranThermal80mm();
+    setLocationRelativeTo(null);
+    }
+    
+    
+    public detailtransaksi(modeltransaksi mt, user u, List<modeltd> list, modelbarang mb, modellogt mlog) {
+    this();
+    loadHeader(mt, u);
+    loadTableDetail(list, mb);
+    setPembayaran(mt, mlog);
     }
 
+private String formatTanggal(LocalDateTime tanggal) {
+    DateTimeFormatter formatter =
+            DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm");
+    return tanggal.format(formatter);
+}
+
+private String formatRupiah(int nilai) {
+    return String.format("%,d", nilai).replace(',', '.');
+}
+
+private void setUkuranThermal80mm() {
+    int width = 500;   // aman untuk thermal 80mm
+    jPanel1.setPreferredSize(new Dimension(width, jPanel1.getHeight()));
+}
+
+    private void loadHeader(modeltransaksi mt, user u) {
+    lblTransaksi.setText(mt.getKodeTransaksi());
+    lblKasir.setText(u.getusername());
+    lblWaktu.setText(formatTanggal(mt.getTanggal()));
+    }
+    
+    private void loadTableDetail(List<modeltd> list, modelbarang mb) {
+
+    DefaultTableModel model = new DefaultTableModel();
+    model.addColumn("Nama Barang");
+    model.addColumn("Qty");
+    model.addColumn("Harga");
+    model.addColumn("Total");
+
+    for (modeltd dt : list) {
+
+        int totalPerItem = dt.getHarga() * dt.getQty();
+
+        model.addRow(new Object[]{
+            mb.getNamaBarang(),
+            dt.getQty(),
+            formatRupiah(dt.getHarga()),
+            formatRupiah(totalPerItem)
+        });
+    }
+
+    tblDetail.setModel(model);
+}
+    
+    private int hitungTotal() {
+    int total = 0;
+
+    for (int i = 0; i < tblDetail.getRowCount(); i++) {
+        String nilai = tblDetail.getValueAt(i, 3).toString()
+                .replace(".", "");
+
+        total += Integer.parseInt(nilai);
+    }
+
+    lblSub.setText("Rp. " + formatRupiah(total));
+    return total;
+}
+    
+    private void setPembayaran(modeltransaksi mt, modellogt mlog) {
+    int subtotal = hitungTotal();
+    int bayar = mlog.getBayar();
+    int kembalian = bayar - subtotal;
+
+    lblBayar.setText("Rp. " + formatRupiah(bayar));
+    lblKembali.setText("Rp. " + formatRupiah(kembalian));
+}
+    
+    private void printThermal80mm() {
+
+    PrinterJob job = PrinterJob.getPrinterJob();
+    job.setJobName("Struk Transaksi 80mm");
+
+    PageFormat pf = job.defaultPage();
+    Paper paper = new Paper();
+
+    // === 80mm thermal ===
+    double paperWidth  = 226;   // ~80mm dalam point
+    double paperHeight = 1000;  // tinggi fleksibel
+
+    paper.setSize(paperWidth, paperHeight);
+
+    // margin kecil (thermal sensitif margin)
+    paper.setImageableArea(5, 5,
+            paperWidth - 10,
+            paperHeight - 10);
+
+    pf.setPaper(paper);
+    pf.setOrientation(PageFormat.PORTRAIT);
+
+    job.setPrintable((graphics, pageFormat, pageIndex) -> {
+
+        if (pageIndex > 0) return Printable.NO_SUCH_PAGE;
+
+        Graphics2D g2 = (Graphics2D) graphics;
+
+        double panelWidth = jPanel1.getWidth();
+        double printableWidth = pageFormat.getImageableWidth();
+
+        // === SCALE KHUSUS THERMAL ===
+        double scale = printableWidth / panelWidth;
+
+        g2.translate(pageFormat.getImageableX(), pageFormat.getImageableY());
+        g2.scale(scale, scale);
+
+        jPanel1.printAll(g2);
+
+        return Printable.PAGE_EXISTS;
+    });
+
+    try {
+        job.print(); // thermal biasanya TANPA dialog
+    } catch (PrinterException e) {
+        JOptionPane.showMessageDialog(this, e.getMessage());
+    }
+}
+    
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -33,44 +179,52 @@ public class detailtransaksi extends javax.swing.JFrame {
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
         jSeparator1 = new javax.swing.JSeparator();
-        jLabel4 = new javax.swing.JLabel();
-        jLabel5 = new javax.swing.JLabel();
-        jLabel6 = new javax.swing.JLabel();
+        lblWaktu = new javax.swing.JLabel();
+        lblKasir = new javax.swing.JLabel();
+        lblTransaksi = new javax.swing.JLabel();
         jSeparator2 = new javax.swing.JSeparator();
         jScrollPane1 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
+        tblDetail = new javax.swing.JTable();
         jSeparator3 = new javax.swing.JSeparator();
-        jLabel7 = new javax.swing.JLabel();
+        lblSub = new javax.swing.JLabel();
         jSeparator4 = new javax.swing.JSeparator();
         jLabel8 = new javax.swing.JLabel();
-        jLabel9 = new javax.swing.JLabel();
+        lblBayar = new javax.swing.JLabel();
         jLabel10 = new javax.swing.JLabel();
-        jLabel11 = new javax.swing.JLabel();
+        lblKembali = new javax.swing.JLabel();
         jLabel12 = new javax.swing.JLabel();
         jSeparator5 = new javax.swing.JSeparator();
         jLabel13 = new javax.swing.JLabel();
         jLabel14 = new javax.swing.JLabel();
         btntutup = new javax.swing.JButton();
         jButton2 = new javax.swing.JButton();
+        jLabel15 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setBackground(new java.awt.Color(255, 255, 255));
 
         jPanel1.setBackground(new java.awt.Color(255, 255, 255));
 
+        jLabel1.setFont(new java.awt.Font("Monospaced", 0, 9)); // NOI18N
         jLabel1.setText("SARI MURNI REJEKI");
 
+        jLabel2.setFont(new java.awt.Font("Monospaced", 0, 9)); // NOI18N
         jLabel2.setText("Jln. Raya Katung Payangan Kintamani, Bangli ");
 
+        jLabel3.setFont(new java.awt.Font("Monospaced", 0, 9)); // NOI18N
         jLabel3.setText("Telp. 08xxxxxxxxx");
 
-        jLabel4.setText("Waktu");
+        lblWaktu.setFont(new java.awt.Font("Monospaced", 0, 9)); // NOI18N
+        lblWaktu.setText("Waktu");
 
-        jLabel5.setText("Kasir");
+        lblKasir.setFont(new java.awt.Font("Monospaced", 0, 9)); // NOI18N
+        lblKasir.setText("Kasir");
 
-        jLabel6.setText("Kode Transaksi");
+        lblTransaksi.setFont(new java.awt.Font("Monospaced", 0, 9)); // NOI18N
+        lblTransaksi.setText("Kode Transaksi");
 
-        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+        tblDetail.setFont(new java.awt.Font("Monospaced", 0, 9)); // NOI18N
+        tblDetail.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null},
                 {null, null, null, null},
@@ -81,28 +235,40 @@ public class detailtransaksi extends javax.swing.JFrame {
                 "Title 1", "Title 2", "Title 3", "Title 4"
             }
         ));
-        jScrollPane1.setViewportView(jTable1);
+        jScrollPane1.setViewportView(tblDetail);
 
-        jLabel7.setText("Sub Total");
+        lblSub.setFont(new java.awt.Font("Monospaced", 0, 9)); // NOI18N
+        lblSub.setText("Sub Total");
 
+        jLabel8.setFont(new java.awt.Font("Monospaced", 0, 9)); // NOI18N
         jLabel8.setText("Rp. 0");
 
-        jLabel9.setText("Bayar ");
+        lblBayar.setFont(new java.awt.Font("Monospaced", 0, 9)); // NOI18N
+        lblBayar.setText("Bayar ");
 
+        jLabel10.setFont(new java.awt.Font("Monospaced", 0, 9)); // NOI18N
         jLabel10.setText("Rp. 0");
 
-        jLabel11.setText("Kembalian");
+        lblKembali.setFont(new java.awt.Font("Monospaced", 0, 9)); // NOI18N
+        lblKembali.setText("Kembalian");
 
+        jLabel12.setFont(new java.awt.Font("Monospaced", 0, 9)); // NOI18N
         jLabel12.setText("Rp. 0");
 
-        jLabel13.setText("\"Terima Kasih - Selamat Datang Kembali\"");
+        jLabel13.setFont(new java.awt.Font("Monospaced", 0, 9)); // NOI18N
+        jLabel13.setText("Terima Kasih");
 
+        jLabel14.setFont(new java.awt.Font("Monospaced", 0, 9)); // NOI18N
         jLabel14.setText("Powered by Vaa POS");
 
         btntutup.setText("Tutup");
         btntutup.addActionListener(this::btntutupActionPerformed);
 
         jButton2.setText("Print");
+        jButton2.addActionListener(this::jButton2ActionPerformed);
+
+        jLabel15.setFont(new java.awt.Font("Monospaced", 0, 9)); // NOI18N
+        jLabel15.setText("Selamat Datang Kembali");
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -112,10 +278,10 @@ public class detailtransaksi extends javax.swing.JFrame {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGap(17, 17, 17)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel6)
-                    .addComponent(jLabel4))
+                    .addComponent(lblTransaksi)
+                    .addComponent(lblWaktu))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jLabel5)
+                .addComponent(lblKasir)
                 .addGap(48, 48, 48))
             .addComponent(jSeparator2)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
@@ -126,47 +292,48 @@ public class detailtransaksi extends javax.swing.JFrame {
             .addComponent(jSeparator4)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel7)
+                .addComponent(lblSub)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jLabel8)
                 .addGap(50, 50, 50))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel9)
-                    .addComponent(jLabel11))
+                    .addComponent(lblBayar)
+                    .addComponent(lblKembali))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel12)
                     .addComponent(jLabel10))
                 .addGap(51, 51, 51))
             .addComponent(jSeparator5)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addContainerGap(35, Short.MAX_VALUE)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                        .addComponent(jLabel2)
-                        .addGap(31, 31, 31))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                        .addComponent(jLabel13)
-                        .addGap(38, 38, 38))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                        .addComponent(jLabel14)
-                        .addGap(98, 98, 98))))
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(98, 98, 98)
-                        .addComponent(jLabel1))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(106, 106, 106)
-                        .addComponent(jLabel3))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addContainerGap()
                         .addComponent(btntutup)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton2)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(jButton2))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGap(115, 115, 115)
+                        .addComponent(jLabel13))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGap(86, 86, 86)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addGap(8, 8, 8)
+                                .addComponent(jLabel14))
+                            .addComponent(jLabel15)))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGap(98, 98, 98)
+                        .addComponent(jLabel1))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGap(27, 27, 27)
+                        .addComponent(jLabel2))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGap(100, 100, 100)
+                        .addComponent(jLabel3)))
+                .addContainerGap(40, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -181,10 +348,10 @@ public class detailtransaksi extends javax.swing.JFrame {
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel4)
-                    .addComponent(jLabel5))
+                    .addComponent(lblWaktu)
+                    .addComponent(lblKasir))
                 .addGap(39, 39, 39)
-                .addComponent(jLabel6)
+                .addComponent(lblTransaksi)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -193,25 +360,27 @@ public class detailtransaksi extends javax.swing.JFrame {
                 .addComponent(jSeparator3, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel7)
+                    .addComponent(lblSub)
                     .addComponent(jLabel8))
                 .addGap(46, 46, 46)
                 .addComponent(jSeparator4, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel9)
+                    .addComponent(lblBayar)
                     .addComponent(jLabel10))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel11)
+                    .addComponent(lblKembali)
                     .addComponent(jLabel12))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator5, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel13)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabel15)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel14)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 58, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 83, Short.MAX_VALUE)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btntutup)
                     .addComponent(jButton2))
@@ -226,9 +395,7 @@ public class detailtransaksi extends javax.swing.JFrame {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, Short.MAX_VALUE))
+            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
         pack();
@@ -237,6 +404,10 @@ public class detailtransaksi extends javax.swing.JFrame {
     private void btntutupActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btntutupActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_btntutupActionPerformed
+
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+    printThermal80mm();        // TODO add your handling code here:
+    }//GEN-LAST:event_jButton2ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -268,18 +439,13 @@ public class detailtransaksi extends javax.swing.JFrame {
     private javax.swing.JButton jButton2;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
-    private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel14;
+    private javax.swing.JLabel jLabel15;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel5;
-    private javax.swing.JLabel jLabel6;
-    private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
-    private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSeparator jSeparator1;
@@ -287,6 +453,12 @@ public class detailtransaksi extends javax.swing.JFrame {
     private javax.swing.JSeparator jSeparator3;
     private javax.swing.JSeparator jSeparator4;
     private javax.swing.JSeparator jSeparator5;
-    private javax.swing.JTable jTable1;
+    private javax.swing.JLabel lblBayar;
+    private javax.swing.JLabel lblKasir;
+    private javax.swing.JLabel lblKembali;
+    private javax.swing.JLabel lblSub;
+    private javax.swing.JLabel lblTransaksi;
+    private javax.swing.JLabel lblWaktu;
+    private javax.swing.JTable tblDetail;
     // End of variables declaration//GEN-END:variables
 }
