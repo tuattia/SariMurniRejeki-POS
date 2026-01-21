@@ -580,7 +580,7 @@ private List<modeltd> ambilDetail(String kodeTransaksi) {
         txtDp.setFont(new java.awt.Font("Poppins", 0, 12)); // NOI18N
 
         cmbJc.setBackground(new java.awt.Color(242, 246, 250));
-        cmbJc.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "1", "2", "3", "4" }));
+        cmbJc.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15" }));
 
         jButton1.setText("Add");
         jButton1.addActionListener(this::jButton1ActionPerformed);
