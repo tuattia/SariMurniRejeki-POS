@@ -9,7 +9,7 @@ import java. sql.SQLException;
  */
 
 public class koneksi {
-    private static final String URL = "jdbc:mysql://localhost:3306/debit_app";
+    private static final String URL = "jdbc:mysql://localhost:3306/sarimurnirejeki";
     private static final String USER = "root";
     private static final String PASS = "";
     private static final String DRIVER = "com.mysql.cj.jdbc.Driver";

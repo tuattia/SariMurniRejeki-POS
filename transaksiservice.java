@@ -8,8 +8,10 @@ import config.koneksi;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.util.List;
+import model.modelbarang;
 import model.modellogt;
 import model.modeltransaksi;
 import model.modeltd;
@@ -20,6 +22,109 @@ import model.modeltd;
  */
 public class transaksiservice {
     private Connection con = koneksi.getConnection();
+
+public modeltransaksi getTransaksiByKode(String kodeTransaksi) {
+
+    String sql = "SELECT * FROM transaksi WHERE kode_transaksi = ?";
+
+    try (PreparedStatement ps = con.prepareStatement(sql)) {
+        ps.setString(1, kodeTransaksi);
+        ResultSet rs = ps.executeQuery();
+
+        if (rs.next()) {
+            modeltransaksi t = new modeltransaksi();
+            t.setKodeTransaksi(rs.getString("kode_transaksi"));
+            t.setTanggal(rs.getTimestamp("tanggal").toLocalDateTime());
+            t.setNamaPelanggan(rs.getString("nama_pelanggan"));
+            t.setTotal(rs.getInt("total"));
+            t.setJenisTransaksi(rs.getString("jenis_transaksi"));
+            return t;
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    return null;
+}    
+
+public List<modeltd> getDetailByKode(String kodeTransaksi) {
+
+    List<modeltd> list = new java.util.ArrayList<>();
+
+    String sql = "SELECT * FROM transaksi_detail WHERE kode_transaksi = ?";
+
+    try (PreparedStatement ps = con.prepareStatement(sql)) {
+        ps.setString(1, kodeTransaksi);
+        ResultSet rs = ps.executeQuery();
+
+        while (rs.next()) {
+            modeltd d = new modeltd();
+            d.setKodeTransaksi(kodeTransaksi);
+            d.setKodeBarang(rs.getString("kode_barang"));
+            d.setHarga(rs.getInt("harga"));
+            d.setQty(rs.getInt("qty"));
+            d.setSubtotal(rs.getInt("subtotal"));
+            list.add(d);
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    return list;
+}
+
+public modellogt getLogByKode(String kodeTransaksi) {
+
+    String sql = "SELECT * FROM log_transaksi WHERE kode_transaksi = ?";
+
+    try (PreparedStatement ps = con.prepareStatement(sql)) {
+        ps.setString(1, kodeTransaksi);
+        ResultSet rs = ps.executeQuery();
+
+        if (rs.next()) {
+            modellogt log = new modellogt();
+            log.setKodeTransaksi(rs.getString("kode_transaksi"));
+            log.setTanggal(rs.getTimestamp("tanggal").toLocalDateTime());
+            log.setNamaPelanggan(rs.getString("nama_pelanggan"));
+            log.setTotal(rs.getInt("total"));
+            log.setBayar(rs.getInt("bayar"));
+            log.setKembali(rs.getInt("kembali"));
+            log.setTipeTransaksi(rs.getString("tipe_transaksi"));
+            log.setKeterangan(rs.getString("keterangan"));
+            return log;
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    return null;
+}
+ 
+public java.util.Map<String, modelbarang>
+getBarangByTransaksi(String kodeTransaksi) {
+
+    java.util.Map<String, modelbarang> map = new java.util.HashMap<>();
+
+String sql =
+        "SELECT b.kode_barang, b.nama_barang, b.harga_jual " +
+        "FROM transaksi_detail d " +
+        "JOIN barang b ON d.kode_barang = b.kode_barang " +
+        "WHERE d.kode_transaksi = ?";
+
+    try (PreparedStatement ps = con.prepareStatement(sql)) {
+        ps.setString(1, kodeTransaksi);
+        ResultSet rs = ps.executeQuery();
+
+        while (rs.next()) {
+            modelbarang b = new modelbarang();
+            b.setKodeBarang(rs.getString("kode_barang"));
+            b.setNamaBarang(rs.getString("nama_barang"));
+            b.setHargaJual(rs.getInt("harga_jual"));
+
+            map.put(b.getKodeBarang(), b);
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    return map;
+}
 
     public boolean simpanSemua(
             modeltransaksi t,

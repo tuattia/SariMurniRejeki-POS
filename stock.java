@@ -155,13 +155,13 @@ private void loadTable() {
         jLabel2 = new javax.swing.JLabel();
         jPanel1 = new javax.swing.JPanel();
         jLabel3 = new javax.swing.JLabel();
-        jLabel4 = new javax.swing.JLabel();
         transaksibutton = new javax.swing.JPanel();
         jLabel7 = new javax.swing.JLabel();
         stockbutton = new javax.swing.JPanel();
         jLabel9 = new javax.swing.JLabel();
         utangbutton1 = new javax.swing.JPanel();
         jLabel15 = new javax.swing.JLabel();
+        jLabel16 = new javax.swing.JLabel();
         jPanel3 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         tablebarang = new javax.swing.JTable();
@@ -201,7 +201,6 @@ private void loadTable() {
         });
 
         jLabel1.setFont(new java.awt.Font("Poppins", 0, 24)); // NOI18N
-        jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/icons8_Speed_25px.png"))); // NOI18N
         jLabel1.setText("Dashboard");
 
         javax.swing.GroupLayout dashboardbuttonLayout = new javax.swing.GroupLayout(dashboardbutton);
@@ -211,7 +210,7 @@ private void loadTable() {
             .addGroup(dashboardbuttonLayout.createSequentialGroup()
                 .addGap(36, 36, 36)
                 .addComponent(jLabel1)
-                .addContainerGap(58, Short.MAX_VALUE))
+                .addContainerGap(97, Short.MAX_VALUE))
         );
         dashboardbuttonLayout.setVerticalGroup(
             dashboardbuttonLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -221,22 +220,21 @@ private void loadTable() {
                 .addGap(29, 29, 29))
         );
 
-        sidepanel.add(dashboardbutton, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 330, 260, 50));
+        sidepanel.add(dashboardbutton, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 330, 270, 50));
 
         jPanel6.setBackground(new java.awt.Color(3, 169, 245));
 
         txtuser.setFont(new java.awt.Font("Tahoma", 0, 24)); // NOI18N
         txtuser.setForeground(new java.awt.Color(255, 255, 255));
         txtuser.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        txtuser.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/icons8_Male_User_25px.png"))); // NOI18N
         txtuser.setText("User");
 
-        lbl_date.setFont(new java.awt.Font("Tahoma", 0, 24)); // NOI18N
+        lbl_date.setFont(new java.awt.Font("Poppins", 0, 18)); // NOI18N
         lbl_date.setForeground(new java.awt.Color(255, 255, 255));
         lbl_date.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         lbl_date.setText("Tanggal");
 
-        lbl_jam.setFont(new java.awt.Font("Tahoma", 0, 24)); // NOI18N
+        lbl_jam.setFont(new java.awt.Font("Poppins", 0, 24)); // NOI18N
         lbl_jam.setForeground(new java.awt.Color(255, 255, 255));
         lbl_jam.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         lbl_jam.setText("Jam");
@@ -245,16 +243,13 @@ private void loadTable() {
         jPanel6.setLayout(jPanel6Layout);
         jPanel6Layout.setHorizontalGroup(
             jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel6Layout.createSequentialGroup()
-                .addGap(0, 0, Short.MAX_VALUE)
-                .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(lbl_date, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 250, Short.MAX_VALUE)
-                    .addComponent(lbl_jam, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addGap(802, 802, 802))
             .addGroup(jPanel6Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(txtuser)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(txtuser)
+                    .addComponent(lbl_jam, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lbl_date, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(74, Short.MAX_VALUE))
         );
         jPanel6Layout.setVerticalGroup(
             jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -265,7 +260,7 @@ private void loadTable() {
                 .addComponent(lbl_date)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(lbl_jam)
-                .addContainerGap(15, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         sidepanel.add(jPanel6, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 168, 330, 140));
@@ -279,7 +274,6 @@ private void loadTable() {
         });
 
         jLabel2.setFont(new java.awt.Font("Poppins", 0, 24)); // NOI18N
-        jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/icons8_Speed_25px.png"))); // NOI18N
         jLabel2.setText("Utang");
         jLabel2.setAlignmentY(0.0F);
 
@@ -290,7 +284,7 @@ private void loadTable() {
             .addGroup(utangbuttonLayout.createSequentialGroup()
                 .addGap(35, 35, 35)
                 .addComponent(jLabel2)
-                .addContainerGap(120, Short.MAX_VALUE))
+                .addContainerGap(159, Short.MAX_VALUE))
         );
         utangbuttonLayout.setVerticalGroup(
             utangbuttonLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -300,7 +294,7 @@ private void loadTable() {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        sidepanel.add(utangbutton, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 480, 260, 50));
+        sidepanel.add(utangbutton, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 480, 270, 50));
 
         jPanel1.setBackground(new java.awt.Color(242, 246, 250));
         jPanel1.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
@@ -337,12 +331,6 @@ private void loadTable() {
 
         sidepanel.add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 590, -1, 30));
 
-        jLabel4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/logosmrcropmini.png"))); // NOI18N
-        jLabel4.setMaximumSize(new java.awt.Dimension(100, 100));
-        jLabel4.setMinimumSize(new java.awt.Dimension(100, 100));
-        jLabel4.setPreferredSize(new java.awt.Dimension(100, 100));
-        sidepanel.add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 0, 195, 152));
-
         transaksibutton.setBackground(new java.awt.Color(242, 246, 250));
         transaksibutton.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
         transaksibutton.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -352,7 +340,6 @@ private void loadTable() {
         });
 
         jLabel7.setFont(new java.awt.Font("Poppins", 0, 24)); // NOI18N
-        jLabel7.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/icons8_Speed_25px.png"))); // NOI18N
         jLabel7.setText("Transaksi");
 
         javax.swing.GroupLayout transaksibuttonLayout = new javax.swing.GroupLayout(transaksibutton);
@@ -362,7 +349,7 @@ private void loadTable() {
             .addGroup(transaksibuttonLayout.createSequentialGroup()
                 .addGap(36, 36, 36)
                 .addComponent(jLabel7)
-                .addContainerGap(78, Short.MAX_VALUE))
+                .addContainerGap(117, Short.MAX_VALUE))
         );
         transaksibuttonLayout.setVerticalGroup(
             transaksibuttonLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -372,7 +359,7 @@ private void loadTable() {
                 .addGap(29, 29, 29))
         );
 
-        sidepanel.add(transaksibutton, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 380, 260, 50));
+        sidepanel.add(transaksibutton, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 380, 270, 50));
 
         stockbutton.setBackground(new java.awt.Color(242, 246, 250));
         stockbutton.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
@@ -383,7 +370,6 @@ private void loadTable() {
         });
 
         jLabel9.setFont(new java.awt.Font("Poppins", 0, 24)); // NOI18N
-        jLabel9.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/icons8_Speed_25px.png"))); // NOI18N
         jLabel9.setText("Stock");
 
         javax.swing.GroupLayout stockbuttonLayout = new javax.swing.GroupLayout(stockbutton);
@@ -393,7 +379,7 @@ private void loadTable() {
             .addGroup(stockbuttonLayout.createSequentialGroup()
                 .addGap(36, 36, 36)
                 .addComponent(jLabel9)
-                .addContainerGap(126, Short.MAX_VALUE))
+                .addContainerGap(165, Short.MAX_VALUE))
         );
         stockbuttonLayout.setVerticalGroup(
             stockbuttonLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -403,7 +389,7 @@ private void loadTable() {
                 .addGap(29, 29, 29))
         );
 
-        sidepanel.add(stockbutton, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 430, 260, 50));
+        sidepanel.add(stockbutton, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 430, 270, 50));
 
         utangbutton1.setBackground(new java.awt.Color(242, 246, 250));
         utangbutton1.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
@@ -414,7 +400,6 @@ private void loadTable() {
         });
 
         jLabel15.setFont(new java.awt.Font("Poppins", 0, 24)); // NOI18N
-        jLabel15.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/icons8_Speed_25px.png"))); // NOI18N
         jLabel15.setText("Log Transaksi");
         jLabel15.setAlignmentY(0.0F);
 
@@ -425,7 +410,7 @@ private void loadTable() {
             .addGroup(utangbutton1Layout.createSequentialGroup()
                 .addGap(35, 35, 35)
                 .addComponent(jLabel15)
-                .addContainerGap(31, Short.MAX_VALUE))
+                .addContainerGap(70, Short.MAX_VALUE))
         );
         utangbutton1Layout.setVerticalGroup(
             utangbutton1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -435,9 +420,12 @@ private void loadTable() {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        sidepanel.add(utangbutton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 530, 260, -1));
+        sidepanel.add(utangbutton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 530, 270, -1));
 
-        getContentPane().add(sidepanel, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 260, 650));
+        jLabel16.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/logosmrhitam-removebg-preview 1.png"))); // NOI18N
+        sidepanel.add(jLabel16, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 20, -1, -1));
+
+        getContentPane().add(sidepanel, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 270, 650));
 
         jPanel3.setBackground(new java.awt.Color(242, 246, 250));
         jPanel3.setEnabled(false);
@@ -749,6 +737,7 @@ private void loadTable() {
     private void utangbuttonMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_utangbuttonMouseClicked
     crudUtang cu = new crudUtang();
     cu.setVisible(true);
+    this.dispose();
     }//GEN-LAST:event_utangbuttonMouseClicked
 
     private void transaksibuttonMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_transaksibuttonMouseClicked
@@ -938,9 +927,9 @@ private void startClock() {
     private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel14;
     private javax.swing.JLabel jLabel15;
+    private javax.swing.JLabel jLabel16;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;

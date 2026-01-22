@@ -92,12 +92,33 @@ private void setBayarPerbulan() {
 private void loadTableCicilan(modelutang mu) {
 
     DefaultTableModel model = new DefaultTableModel();
-    model.addColumn("Cicilan Ke");
+    model.addColumn("Angsuran");
     model.addColumn("Tanggal Jatuh Tempo");
     model.addColumn("Nominal Bayar");
     model.addColumn("Sisa Hutang");
     model.addColumn("Paraf");
+    tableCicilan.setModel(model);
+    // Index 0: Angsuran (Perkecil)
+javax.swing.table.TableColumnModel columnModel = tableCicilan.getColumnModel();
+columnModel.getColumn(0).setPreferredWidth(70);
+columnModel.getColumn(0).setMaxWidth(80);
 
+// Index 4: Paraf (Perkecil)
+
+
+// Index 1, 2, 3: Tanggal Jatuh Tempo, Nominal, Sisa Hutang (Lebih Lebar)
+columnModel.getColumn(1).setPreferredWidth(150); 
+columnModel.getColumn(2).setPreferredWidth(120);
+columnModel.getColumn(3).setPreferredWidth(120);
+columnModel.getColumn(4).setPreferredWidth(60);
+columnModel.getColumn(4).setMaxWidth(80);
+jScrollPane1.setBorder(javax.swing.BorderFactory.createLineBorder(java.awt.Color.BLACK));
+tableCicilan.setShowGrid(true);
+tableCicilan.setShowHorizontalLines(true);
+tableCicilan.setShowVerticalLines(true);
+
+// Mengatur warna garis agar terlihat jelas (misal: Hitam atau Abu-abu)
+tableCicilan.setGridColor(java.awt.Color.BLACK);
     for (int i = 1; i <= 15; i++) {
 
         Object[] row = new Object[]{
@@ -111,7 +132,6 @@ private void loadTableCicilan(modelutang mu) {
         model.addRow(row);
     }
 
-    tableCicilan.setModel(model);
 }
 
 
@@ -211,6 +231,10 @@ private void print15x20() {
         jLabel8 = new javax.swing.JLabel();
         txtperbulan = new javax.swing.JLabel();
         jLabel9 = new javax.swing.JLabel();
+        jLabel10 = new javax.swing.JLabel();
+        jLabel11 = new javax.swing.JLabel();
+        jLabel12 = new javax.swing.JLabel();
+        jLabel13 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setPreferredSize(new java.awt.Dimension(567, 756));
@@ -280,7 +304,7 @@ private void print15x20() {
         ));
         jScrollPane1.setViewportView(tableCicilan);
 
-        panelDetailutang.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 300, 530, 270));
+        panelDetailutang.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 190, 530, 270));
 
         jButton3.setText("Kembali");
         jButton3.addActionListener(this::jButton3ActionPerformed);
@@ -305,6 +329,18 @@ private void print15x20() {
         jLabel9.setFont(new java.awt.Font("Poppins", 0, 12)); // NOI18N
         jLabel9.setText("Bayar Perbulan:");
         panelDetailutang.add(jLabel9, new org.netbeans.lib.awtextra.AbsoluteConstraints(290, 130, -1, -1));
+
+        jLabel10.setText("Pengawas");
+        panelDetailutang.add(jLabel10, new org.netbeans.lib.awtextra.AbsoluteConstraints(410, 480, -1, -1));
+
+        jLabel11.setText("Peminjam");
+        panelDetailutang.add(jLabel11, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 480, -1, -1));
+
+        jLabel12.setText("(Ni Wayan Suerni)");
+        panelDetailutang.add(jLabel12, new org.netbeans.lib.awtextra.AbsoluteConstraints(390, 560, -1, -1));
+
+        jLabel13.setText("(.....................................................)");
+        panelDetailutang.add(jLabel13, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 550, -1, -1));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -358,6 +394,10 @@ private void print15x20() {
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel10;
+    private javax.swing.JLabel jLabel11;
+    private javax.swing.JLabel jLabel12;
+    private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;

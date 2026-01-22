@@ -5,12 +5,21 @@
 package gui;
 
 
+import config.koneksi;
 import controller.logtcontroller;
+import controller.transaksiservice;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.List;
+import java.util.Map;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
+import model.modelbarang;
 import model.modellogt;
+import model.modeltd;
+import model.modeltransaksi;
 
 /**
  *
@@ -70,6 +79,63 @@ private void loadData() {
     }
 }
 
+    public void searchtransaksi(String keyword) {
+    DefaultTableModel model = (DefaultTableModel) tablelog.getModel();
+    model.setRowCount(0);
+
+    String sql = "SELECT * FROM log_transaksi WHERE kode_transaksi LIKE ? OR nama_pelanggan LIKE ?";
+
+    try {
+        Connection con = koneksi.getConnection();
+        PreparedStatement ps = con.prepareStatement(sql);
+        ps.setString(1, "%" + keyword + "%");
+        ps.setString(2, "%" + keyword + "%");
+
+        ResultSet rs = ps.executeQuery();
+
+        int no = 1; // Untuk kolom nomor urut di tabel GUI
+        while (rs.next()) {
+            Object[] row = {
+                no++, // Mengisi kolom 'No'
+                rs.getString("kode_transaksi"),
+                rs.getString("tanggal"),
+                rs.getString("nama_pelanggan"),
+                rs.getInt("total"),
+                rs.getInt("bayar"),
+                rs.getInt("kembali"),
+                rs.getString("tipe_transaksi"),
+                rs.getString("keterangan")
+            };
+            model.addRow(row);
+        }
+
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(null, "Error search data: " + e.getMessage());
+    }
+} 
+
+private void bukaDetailTransaksi(String kodeTransaksi) {
+    transaksiservice service = new transaksiservice();
+
+    modeltransaksi mt = service.getTransaksiByKode(kodeTransaksi);
+    modellogt log = service.getLogByKode(kodeTransaksi); // <-- Ini yang null
+    List<modeltd> list = service.getDetailByKode(kodeTransaksi);
+    Map<String, modelbarang> mapBarang = service.getBarangByTransaksi(kodeTransaksi);
+
+    // TAMBAHKAN PENGECEKAN INI:
+    if (log == null) {
+        javax.swing.JOptionPane.showMessageDialog(this, 
+            "Data log transaksi tidak ditemukan untuk kode: " + kodeTransaksi, 
+            "Error", 
+            javax.swing.JOptionPane.ERROR_MESSAGE);
+        return; // Hentikan proses agar tidak error
+    }
+
+    // Jika log tidak null, baru jalankan ini
+    detailtransaksi form = new detailtransaksi(mt, list, mapBarang, log);
+    form.setVisible(true);
+}
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -92,17 +158,18 @@ private void loadData() {
         jLabel4 = new javax.swing.JLabel();
         jPanel2 = new javax.swing.JPanel();
         jLabel5 = new javax.swing.JLabel();
-        jLabel6 = new javax.swing.JLabel();
         dashboardbutton1 = new javax.swing.JPanel();
         jLabel7 = new javax.swing.JLabel();
         dashboardbutton3 = new javax.swing.JPanel();
         jLabel9 = new javax.swing.JLabel();
+        jLabel6 = new javax.swing.JLabel();
         jPanel1 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         tablelog = new javax.swing.JTable();
         jLabel2 = new javax.swing.JLabel();
-        jTextField1 = new javax.swing.JTextField();
+        txtsearch = new javax.swing.JTextField();
+        btndetail = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -118,7 +185,6 @@ private void loadData() {
         });
 
         jLabel3.setFont(new java.awt.Font("Poppins", 0, 24)); // NOI18N
-        jLabel3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/icons8_Speed_25px.png"))); // NOI18N
         jLabel3.setText("Dashboard");
 
         javax.swing.GroupLayout dashboardbuttonLayout = new javax.swing.GroupLayout(dashboardbutton);
@@ -128,7 +194,7 @@ private void loadData() {
             .addGroup(dashboardbuttonLayout.createSequentialGroup()
                 .addGap(36, 36, 36)
                 .addComponent(jLabel3)
-                .addContainerGap(68, Short.MAX_VALUE))
+                .addContainerGap(97, Short.MAX_VALUE))
         );
         dashboardbuttonLayout.setVerticalGroup(
             dashboardbuttonLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -145,10 +211,9 @@ private void loadData() {
         txtuser.setFont(new java.awt.Font("Poppins", 0, 24)); // NOI18N
         txtuser.setForeground(new java.awt.Color(255, 255, 255));
         txtuser.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        txtuser.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/icons8_Male_User_25px.png"))); // NOI18N
         txtuser.setText("User");
 
-        lbl_date.setFont(new java.awt.Font("Poppins", 0, 24)); // NOI18N
+        lbl_date.setFont(new java.awt.Font("Poppins", 0, 18)); // NOI18N
         lbl_date.setForeground(new java.awt.Color(255, 255, 255));
         lbl_date.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         lbl_date.setText("Tanggal");
@@ -162,25 +227,22 @@ private void loadData() {
         jPanel6.setLayout(jPanel6Layout);
         jPanel6Layout.setHorizontalGroup(
             jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel6Layout.createSequentialGroup()
-                .addGap(0, 0, Short.MAX_VALUE)
-                .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(lbl_date, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 250, Short.MAX_VALUE)
-                    .addComponent(lbl_jam, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addGap(802, 802, 802))
             .addGroup(jPanel6Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(txtuser)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(txtuser)
+                    .addComponent(lbl_date, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lbl_jam, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(74, Short.MAX_VALUE))
         );
         jPanel6Layout.setVerticalGroup(
             jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel6Layout.createSequentialGroup()
                 .addGap(8, 8, 8)
                 .addComponent(txtuser)
-                .addGap(18, 18, 18)
-                .addComponent(lbl_date)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(lbl_date)
+                .addGap(12, 12, 12)
                 .addComponent(lbl_jam)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
@@ -196,7 +258,6 @@ private void loadData() {
         });
 
         jLabel8.setFont(new java.awt.Font("Poppins", 0, 24)); // NOI18N
-        jLabel8.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/icons8_Speed_25px.png"))); // NOI18N
         jLabel8.setText("Log Transaksi");
         jLabel8.setAlignmentY(0.0F);
 
@@ -207,7 +268,7 @@ private void loadData() {
             .addGroup(utangbutton1Layout.createSequentialGroup()
                 .addGap(35, 35, 35)
                 .addComponent(jLabel8)
-                .addContainerGap(41, Short.MAX_VALUE))
+                .addContainerGap(70, Short.MAX_VALUE))
         );
         utangbutton1Layout.setVerticalGroup(
             utangbutton1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -228,7 +289,6 @@ private void loadData() {
         });
 
         jLabel4.setFont(new java.awt.Font("Poppins", 0, 24)); // NOI18N
-        jLabel4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/icons8_Speed_25px.png"))); // NOI18N
         jLabel4.setText("Utang");
         jLabel4.setAlignmentY(0.0F);
 
@@ -239,7 +299,7 @@ private void loadData() {
             .addGroup(utangbuttonLayout.createSequentialGroup()
                 .addGap(35, 35, 35)
                 .addComponent(jLabel4)
-                .addContainerGap(130, Short.MAX_VALUE))
+                .addContainerGap(159, Short.MAX_VALUE))
         );
         utangbuttonLayout.setVerticalGroup(
             utangbuttonLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -285,12 +345,6 @@ private void loadData() {
 
         sidepanel.add(jPanel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 590, -1, 30));
 
-        jLabel6.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/logosmrcropmini.png"))); // NOI18N
-        jLabel6.setMaximumSize(new java.awt.Dimension(100, 100));
-        jLabel6.setMinimumSize(new java.awt.Dimension(100, 100));
-        jLabel6.setPreferredSize(new java.awt.Dimension(100, 100));
-        sidepanel.add(jLabel6, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 0, 195, 152));
-
         dashboardbutton1.setBackground(new java.awt.Color(242, 246, 250));
         dashboardbutton1.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
         dashboardbutton1.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -300,7 +354,6 @@ private void loadData() {
         });
 
         jLabel7.setFont(new java.awt.Font("Poppins", 0, 24)); // NOI18N
-        jLabel7.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/icons8_Speed_25px.png"))); // NOI18N
         jLabel7.setText("Transaksi");
 
         javax.swing.GroupLayout dashboardbutton1Layout = new javax.swing.GroupLayout(dashboardbutton1);
@@ -310,7 +363,7 @@ private void loadData() {
             .addGroup(dashboardbutton1Layout.createSequentialGroup()
                 .addGap(36, 36, 36)
                 .addComponent(jLabel7)
-                .addContainerGap(88, Short.MAX_VALUE))
+                .addContainerGap(117, Short.MAX_VALUE))
         );
         dashboardbutton1Layout.setVerticalGroup(
             dashboardbutton1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -331,7 +384,6 @@ private void loadData() {
         });
 
         jLabel9.setFont(new java.awt.Font("Poppins", 0, 24)); // NOI18N
-        jLabel9.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/icons8_Speed_25px.png"))); // NOI18N
         jLabel9.setText("Stock");
 
         javax.swing.GroupLayout dashboardbutton3Layout = new javax.swing.GroupLayout(dashboardbutton3);
@@ -341,7 +393,7 @@ private void loadData() {
             .addGroup(dashboardbutton3Layout.createSequentialGroup()
                 .addGap(36, 36, 36)
                 .addComponent(jLabel9)
-                .addContainerGap(136, Short.MAX_VALUE))
+                .addContainerGap(165, Short.MAX_VALUE))
         );
         dashboardbutton3Layout.setVerticalGroup(
             dashboardbutton3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -352,6 +404,9 @@ private void loadData() {
         );
 
         sidepanel.add(dashboardbutton3, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 420, 270, 50));
+
+        jLabel6.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/logosmrhitam-removebg-preview 1.png"))); // NOI18N
+        sidepanel.add(jLabel6, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 20, -1, -1));
 
         jPanel1.setBackground(new java.awt.Color(242, 246, 250));
 
@@ -374,7 +429,15 @@ private void loadData() {
 
         jLabel2.setText("Search :");
 
-        jTextField1.addActionListener(this::jTextField1ActionPerformed);
+        txtsearch.addActionListener(this::txtsearchActionPerformed);
+        txtsearch.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                txtsearchKeyReleased(evt);
+            }
+        });
+
+        btndetail.setText("Detail");
+        btndetail.addActionListener(this::btndetailActionPerformed);
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -391,7 +454,9 @@ private void loadData() {
                                 .addContainerGap()
                                 .addComponent(jLabel2)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 141, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addComponent(txtsearch, javax.swing.GroupLayout.PREFERRED_SIZE, 141, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(18, 18, 18)
+                                .addComponent(btndetail)))
                         .addGap(0, 433, Short.MAX_VALUE))
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING))
                 .addContainerGap())
@@ -404,7 +469,8 @@ private void loadData() {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel2)
-                    .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(txtsearch, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(btndetail))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 501, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -428,24 +494,27 @@ private void loadData() {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jTextField1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField1ActionPerformed
+    private void txtsearchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtsearchActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_jTextField1ActionPerformed
+    }//GEN-LAST:event_txtsearchActionPerformed
 
     private void dashboardbuttonMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_dashboardbuttonMouseClicked
-
+        logtransaksi lt = new logtransaksi();
+        lt.setVisible(true);
+        this.dispose();
         // TODO add your handling code here:
     }//GEN-LAST:event_dashboardbuttonMouseClicked
 
     private void utangbutton1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_utangbutton1MouseClicked
         logtransaksi lt = new logtransaksi();
         lt.setVisible(true);
-
+        this.dispose(); 
     }//GEN-LAST:event_utangbutton1MouseClicked
 
     private void utangbuttonMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_utangbuttonMouseClicked
         crudUtang cu = new crudUtang();
         cu.setVisible(true);
+        this.dispose();
     }//GEN-LAST:event_utangbuttonMouseClicked
 
     private void jLabel5MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel5MousePressed
@@ -476,6 +545,26 @@ private void loadData() {
         this.dispose();
     }//GEN-LAST:event_dashboardbutton3MouseClicked
 
+    private void btndetailActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btndetailActionPerformed
+
+    int row = tablelog.getSelectedRow();
+    if (row == -1) {
+        JOptionPane.showMessageDialog(this, "Pilih transaksi terlebih dahulu");
+        return;
+    }
+
+    String kodeTransaksi = tablelog.getValueAt(row, 1).toString();
+
+    bukaDetailTransaksi(kodeTransaksi);
+    }//GEN-LAST:event_btndetailActionPerformed
+
+    private void txtsearchKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtsearchKeyReleased
+    searchtransaksi(txtsearch.getText());
+            if (txtsearch.getText().isEmpty()) {
+    loadData();
+    }        // TODO add your handling code here:
+    }//GEN-LAST:event_txtsearchKeyReleased
+
     /**
      * @param args the command line arguments
      */
@@ -502,6 +591,7 @@ private void loadData() {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btndetail;
     private javax.swing.JPanel dashboardbutton;
     private javax.swing.JPanel dashboardbutton1;
     private javax.swing.JPanel dashboardbutton3;
@@ -518,11 +608,11 @@ private void loadData() {
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel6;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JTextField jTextField1;
     private javax.swing.JLabel lbl_date;
     private javax.swing.JLabel lbl_jam;
     private javax.swing.JPanel sidepanel;
     private javax.swing.JTable tablelog;
+    private javax.swing.JTextField txtsearch;
     private javax.swing.JLabel txtuser;
     private javax.swing.JPanel utangbutton;
     private javax.swing.JPanel utangbutton1;

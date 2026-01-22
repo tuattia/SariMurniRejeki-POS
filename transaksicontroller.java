@@ -315,25 +315,9 @@ private void simpanUtangTanpaCommit(Connection con, modelutang u) throws Excepti
     }
 }
 
-    public String generateNoTransaksi() {
-    Connection con = koneksi.getConnection();
-    String prefix = "TRX" + java.time.LocalDate.now().toString().replace("-", "");
-    String sql = "SELECT COUNT(*) FROM transaksi WHERE no_transaksi LIKE ?";
-
-    try (PreparedStatement ps = con.prepareStatement(sql)) {
-        ps.setString(1, prefix + "%");
-        ResultSet rs = ps.executeQuery();
-
-        if (rs.next()) {
-            int nomor = rs.getInt(1) + 1;
-            return prefix + "-" + String.format("%03d", nomor);
-        }
-    } catch (Exception e) {
-        e.printStackTrace();
-    }
-
-    return prefix + "-001";
-}
+public String generateKodeTransaksi() {
+    return "TRX-" + System.currentTimeMillis();
+} 
 
     // ============================
     // GET TRANSAKSI BY KODE

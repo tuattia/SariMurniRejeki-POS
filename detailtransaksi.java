@@ -14,9 +14,9 @@ import java.awt.print.PrinterJob;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
-import login.user;
 import model.modelbarang;
 import model.modellogt;
 import model.modeltd;
@@ -36,15 +36,19 @@ public class detailtransaksi extends javax.swing.JFrame {
     
     public detailtransaksi() {
     initComponents();
-    setUkuranThermal80mm();
+    jScrollPane1.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+    jScrollPane1.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    jScrollPane1.setBorder(null);
+    tblDetail.setTableHeader(null);
+    setUkuranThermal58mm();
     setLocationRelativeTo(null);
     }
     
     
-    public detailtransaksi(modeltransaksi mt, user u, List<modeltd> list, modelbarang mb, modellogt mlog) {
+    public detailtransaksi(modeltransaksi mt, List<modeltd> list,  Map<String, modelbarang> mapBarang, modellogt mlog) {
     this();
-    loadHeader(mt, u);
-    loadTableDetail(list, mb);
+    loadHeader(mlog);
+    loadTableDetail(list, mapBarang);
     setPembayaran(mt, mlog);
     }
 
@@ -58,18 +62,22 @@ private String formatRupiah(int nilai) {
     return String.format("%,d", nilai).replace(',', '.');
 }
 
-private void setUkuranThermal80mm() {
-    int width = 500;   // aman untuk thermal 80mm
-    jPanel1.setPreferredSize(new Dimension(width, jPanel1.getHeight()));
+private void setUkuranThermal58mm() {
+    // Gunakan lebar antara 300 - 350
+    int width = 320; 
+    jPanel1.setPreferredSize(new Dimension(width, jPanel1.getPreferredSize().height));
+    jPanel1.setMinimumSize(new Dimension(width, 100));
+    jPanel1.setMaximumSize(new Dimension(width, 5000)); // Tinggi biarkan fleksibel
 }
 
-    private void loadHeader(modeltransaksi mt, user u) {
-    lblTransaksi.setText(mt.getKodeTransaksi());
-    lblKasir.setText(u.getusername());
-    lblWaktu.setText(formatTanggal(mt.getTanggal()));
+    private void loadHeader(modellogt mlog) {
+    lblTransaksi.setText(mlog.getKodeTransaksi());
+    lblWaktu.setText(formatTanggal(mlog.getTanggal()));
     }
     
-    private void loadTableDetail(List<modeltd> list, modelbarang mb) {
+private void loadTableDetail(
+        List<modeltd> list,
+        Map<String, modelbarang> mapBarang) {
 
     DefaultTableModel model = new DefaultTableModel();
     model.addColumn("Nama Barang");
@@ -79,15 +87,58 @@ private void setUkuranThermal80mm() {
 
     for (modeltd dt : list) {
 
+        modelbarang barang = mapBarang.get(dt.getKodeBarang());
+
+        String namaBarang = (barang != null)
+                ? barang.getNamaBarang()
+                : "-";
+
         int totalPerItem = dt.getHarga() * dt.getQty();
 
         model.addRow(new Object[]{
-            mb.getNamaBarang(),
+            namaBarang,
             dt.getQty(),
             formatRupiah(dt.getHarga()),
             formatRupiah(totalPerItem)
         });
     }
+    
+    tblDetail.setModel(model);
+    javax.swing.table.TableColumnModel columnModel = tblDetail.getColumnModel();
+
+// Asumsi total lebar tabel sekitar 300-320 pixel untuk 58mm
+// Index 0: Nama Barang, Index 1: Qty, Index 2: Harga, Index 3: Total
+
+// 1. Perkecil Qty (Index 1)
+    columnModel.getColumn(1).setPreferredWidth(30); 
+    columnModel.getColumn(1).setMaxWidth(40); // Kunci agar tidak melebar
+
+    // 2. Atur Harga dan Total (Index 2 & 3) agar cukup untuk angka
+    columnModel.getColumn(2).setPreferredWidth(70);
+    columnModel.getColumn(3).setPreferredWidth(70);
+
+    // 3. Perpanjang Nama Barang (Index 0) - Berikan sisa ruangnya
+    columnModel.getColumn(0).setPreferredWidth(150);
+    // --- KODE AGAR TABEL FIT ---
+    int rowHeight = tblDetail.getRowHeight();
+    int rowCount = tblDetail.getRowCount();
+    // Hitung total tinggi: (jumlah baris * tinggi baris) + tinggi header (biasanya 20-25)
+    tblDetail.setBackground(java.awt.Color.WHITE); // Mengubah background tabel
+    tblDetail.setGridColor(java.awt.Color.WHITE); // Menyembunyikan garis grid (opsional agar bersih)
+    jScrollPane1.getViewport().setBackground(java.awt.Color.WHITE); // Mengubah background area scroll
+    jScrollPane1.setBackground(java.awt.Color.WHITE);
+    int headerHeight = 0;
+    if (tblDetail.getTableHeader() != null) {
+        headerHeight = tblDetail.getTableHeader().getPreferredSize().height;
+    }
+
+    // Gunakan headerHeight yang sudah dicek (0 jika null)
+    int totalHeight = (rowCount * rowHeight) + headerHeight;
+
+    tblDetail.setPreferredScrollableViewportSize(new Dimension(tblDetail.getPreferredSize().width, totalHeight));
+    
+    jScrollPane1.setViewportView(tblDetail);
+    jPanel1.revalidate();
 
     tblDetail.setModel(model);
 }
@@ -102,7 +153,7 @@ private void setUkuranThermal80mm() {
         total += Integer.parseInt(nilai);
     }
 
-    lblSub.setText("Rp. " + formatRupiah(total));
+    lbl1.setText("Rp. " + formatRupiah(total));
     return total;
 }
     
@@ -111,34 +162,34 @@ private void setUkuranThermal80mm() {
     int bayar = mlog.getBayar();
     int kembalian = bayar - subtotal;
 
-    lblBayar.setText("Rp. " + formatRupiah(bayar));
-    lblKembali.setText("Rp. " + formatRupiah(kembalian));
+    lbl2.setText("Rp. " + formatRupiah(bayar));
+    txt3.setText("Rp. " + formatRupiah(kembalian));
 }
     
-    private void printThermal80mm() {
-
+private void printThermal58mm() {
     PrinterJob job = PrinterJob.getPrinterJob();
-    job.setJobName("Struk Transaksi 80mm");
+    job.setJobName("Struk Transaksi 58mm");
 
     PageFormat pf = job.defaultPage();
     Paper paper = new Paper();
 
-    // === 80mm thermal ===
-    double paperWidth  = 226;   // ~80mm dalam point
-    double paperHeight = 1000;  // tinggi fleksibel
+    // === 58mm thermal (Ukuran dalam Point) ===
+    // 1 mm = 2.83 points. Jadi 58mm = ~164.4 points.
+    double paperWidth  = 165;  
+    double paperHeight = 1000; // Tinggi fleksibel mengikuti isi
 
     paper.setSize(paperWidth, paperHeight);
 
-    // margin kecil (thermal sensitif margin)
-    paper.setImageableArea(5, 5,
-            paperWidth - 10,
-            paperHeight - 10);
+    // Margin sangat kecil karena kertas 58mm sangat sempit
+    double margin = 2; 
+    paper.setImageableArea(margin, margin, 
+            paperWidth - (margin * 2), 
+            paperHeight - (margin * 2));
 
     pf.setPaper(paper);
     pf.setOrientation(PageFormat.PORTRAIT);
 
     job.setPrintable((graphics, pageFormat, pageIndex) -> {
-
         if (pageIndex > 0) return Printable.NO_SUCH_PAGE;
 
         Graphics2D g2 = (Graphics2D) graphics;
@@ -146,7 +197,7 @@ private void setUkuranThermal80mm() {
         double panelWidth = jPanel1.getWidth();
         double printableWidth = pageFormat.getImageableWidth();
 
-        // === SCALE KHUSUS THERMAL ===
+        // Skala otomatis agar isi panel masuk ke lebar kertas 165pt
         double scale = printableWidth / panelWidth;
 
         g2.translate(pageFormat.getImageableX(), pageFormat.getImageableY());
@@ -157,12 +208,17 @@ private void setUkuranThermal80mm() {
         return Printable.PAGE_EXISTS;
     });
 
-    try {
-        job.print(); // thermal biasanya TANPA dialog
-    } catch (PrinterException e) {
-        JOptionPane.showMessageDialog(this, e.getMessage());
+try {
+    // Baris ini akan memunculkan jendela pilihan printer seperti di gambarmu
+    if (job.printDialog()) { 
+        job.print();
     }
+} catch (PrinterException e) {
+    JOptionPane.showMessageDialog(this, "Gagal Print: " + e.getMessage());
 }
+}
+
+
     
     
     /**
@@ -186,16 +242,15 @@ private void setUkuranThermal80mm() {
         jScrollPane1 = new javax.swing.JScrollPane();
         tblDetail = new javax.swing.JTable();
         jSeparator3 = new javax.swing.JSeparator();
-        lblSub = new javax.swing.JLabel();
+        lbl1 = new javax.swing.JLabel();
         jSeparator4 = new javax.swing.JSeparator();
-        jLabel8 = new javax.swing.JLabel();
+        lblSub = new javax.swing.JLabel();
+        lbl2 = new javax.swing.JLabel();
         lblBayar = new javax.swing.JLabel();
-        jLabel10 = new javax.swing.JLabel();
+        txt3 = new javax.swing.JLabel();
         lblKembali = new javax.swing.JLabel();
-        jLabel12 = new javax.swing.JLabel();
         jSeparator5 = new javax.swing.JSeparator();
         jLabel13 = new javax.swing.JLabel();
-        jLabel14 = new javax.swing.JLabel();
         btntutup = new javax.swing.JButton();
         jButton2 = new javax.swing.JButton();
         jLabel15 = new javax.swing.JLabel();
@@ -204,23 +259,26 @@ private void setUkuranThermal80mm() {
         setBackground(new java.awt.Color(255, 255, 255));
 
         jPanel1.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel1.setMaximumSize(new java.awt.Dimension(320, 32767));
+        jPanel1.setMinimumSize(new java.awt.Dimension(320, 100));
+        jPanel1.setPreferredSize(new java.awt.Dimension(320, 600));
 
-        jLabel1.setFont(new java.awt.Font("Monospaced", 0, 9)); // NOI18N
+        jLabel1.setFont(new java.awt.Font("Monospaced", 0, 10)); // NOI18N
         jLabel1.setText("SARI MURNI REJEKI");
 
-        jLabel2.setFont(new java.awt.Font("Monospaced", 0, 9)); // NOI18N
+        jLabel2.setFont(new java.awt.Font("Monospaced", 0, 10)); // NOI18N
         jLabel2.setText("Jln. Raya Katung Payangan Kintamani, Bangli ");
 
-        jLabel3.setFont(new java.awt.Font("Monospaced", 0, 9)); // NOI18N
-        jLabel3.setText("Telp. 08xxxxxxxxx");
+        jLabel3.setFont(new java.awt.Font("Monospaced", 0, 10)); // NOI18N
+        jLabel3.setText("Telp. 083851003084");
 
-        lblWaktu.setFont(new java.awt.Font("Monospaced", 0, 9)); // NOI18N
+        lblWaktu.setFont(new java.awt.Font("Monospaced", 0, 10)); // NOI18N
         lblWaktu.setText("Waktu");
 
-        lblKasir.setFont(new java.awt.Font("Monospaced", 0, 9)); // NOI18N
-        lblKasir.setText("Kasir");
+        lblKasir.setFont(new java.awt.Font("Monospaced", 0, 10)); // NOI18N
+        lblKasir.setText("Admin");
 
-        lblTransaksi.setFont(new java.awt.Font("Monospaced", 0, 9)); // NOI18N
+        lblTransaksi.setFont(new java.awt.Font("Monospaced", 0, 10)); // NOI18N
         lblTransaksi.setText("Kode Transaksi");
 
         tblDetail.setFont(new java.awt.Font("Monospaced", 0, 9)); // NOI18N
@@ -237,29 +295,26 @@ private void setUkuranThermal80mm() {
         ));
         jScrollPane1.setViewportView(tblDetail);
 
-        lblSub.setFont(new java.awt.Font("Monospaced", 0, 9)); // NOI18N
+        lbl1.setFont(new java.awt.Font("Monospaced", 0, 10)); // NOI18N
+        lbl1.setText("Rp.0");
+
+        lblSub.setFont(new java.awt.Font("Monospaced", 0, 10)); // NOI18N
         lblSub.setText("Sub Total");
 
-        jLabel8.setFont(new java.awt.Font("Monospaced", 0, 9)); // NOI18N
-        jLabel8.setText("Rp. 0");
+        lbl2.setFont(new java.awt.Font("Monospaced", 0, 10)); // NOI18N
+        lbl2.setText("Rp.0");
 
-        lblBayar.setFont(new java.awt.Font("Monospaced", 0, 9)); // NOI18N
-        lblBayar.setText("Bayar ");
+        lblBayar.setFont(new java.awt.Font("Monospaced", 0, 10)); // NOI18N
+        lblBayar.setText("Bayar");
 
-        jLabel10.setFont(new java.awt.Font("Monospaced", 0, 9)); // NOI18N
-        jLabel10.setText("Rp. 0");
+        txt3.setFont(new java.awt.Font("Monospaced", 0, 10)); // NOI18N
+        txt3.setText("Rp.0");
 
-        lblKembali.setFont(new java.awt.Font("Monospaced", 0, 9)); // NOI18N
+        lblKembali.setFont(new java.awt.Font("Monospaced", 0, 10)); // NOI18N
         lblKembali.setText("Kembalian");
-
-        jLabel12.setFont(new java.awt.Font("Monospaced", 0, 9)); // NOI18N
-        jLabel12.setText("Rp. 0");
 
         jLabel13.setFont(new java.awt.Font("Monospaced", 0, 9)); // NOI18N
         jLabel13.setText("Terima Kasih");
-
-        jLabel14.setFont(new java.awt.Font("Monospaced", 0, 9)); // NOI18N
-        jLabel14.setText("Powered by Vaa POS");
 
         btntutup.setText("Tutup");
         btntutup.addActionListener(this::btntutupActionPerformed);
@@ -290,22 +345,6 @@ private void setUkuranThermal80mm() {
                 .addContainerGap())
             .addComponent(jSeparator3)
             .addComponent(jSeparator4)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(lblSub)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jLabel8)
-                .addGap(50, 50, 50))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblBayar)
-                    .addComponent(lblKembali))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel12)
-                    .addComponent(jLabel10))
-                .addGap(51, 51, 51))
             .addComponent(jSeparator5)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -319,21 +358,32 @@ private void setUkuranThermal80mm() {
                         .addComponent(jLabel13))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGap(86, 86, 86)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGap(8, 8, 8)
-                                .addComponent(jLabel14))
-                            .addComponent(jLabel15)))
+                        .addComponent(jLabel15))
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(98, 98, 98)
+                        .addGap(107, 107, 107)
                         .addComponent(jLabel1))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGap(27, 27, 27)
                         .addComponent(jLabel2))
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(100, 100, 100)
+                        .addGap(16, 16, 16)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(lblBayar)
+                            .addComponent(lblKembali))
+                        .addGap(160, 160, 160)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(lbl2)
+                            .addComponent(txt3)))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGap(104, 104, 104)
                         .addComponent(jLabel3)))
-                .addContainerGap(40, Short.MAX_VALUE))
+                .addContainerGap(29, Short.MAX_VALUE))
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addGap(17, 17, 17)
+                .addComponent(lblSub)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(lbl1)
+                .addGap(66, 66, 66))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -350,37 +400,35 @@ private void setUkuranThermal80mm() {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lblWaktu)
                     .addComponent(lblKasir))
-                .addGap(39, 39, 39)
+                .addGap(27, 27, 27)
                 .addComponent(lblTransaksi)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(18, 18, 18)
                 .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 149, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 202, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jSeparator3, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lblSub)
-                    .addComponent(jLabel8))
-                .addGap(46, 46, 46)
+                    .addComponent(lbl1))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator4, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lblBayar)
-                    .addComponent(jLabel10))
+                    .addComponent(lbl2))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblKembali)
-                    .addComponent(jLabel12))
+                    .addComponent(txt3)
+                    .addComponent(lblKembali))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator5, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel13)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel15)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel14)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 83, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 66, Short.MAX_VALUE)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btntutup)
                     .addComponent(jButton2))
@@ -395,18 +443,18 @@ private void setUkuranThermal80mm() {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 626, Short.MAX_VALUE)
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
     private void btntutupActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btntutupActionPerformed
-        // TODO add your handling code here:
+    this.dispose();         // TODO add your handling code here:
     }//GEN-LAST:event_btntutupActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-    printThermal80mm();        // TODO add your handling code here:
+    printThermal58mm();        // TODO add your handling code here:
     }//GEN-LAST:event_jButton2ActionPerformed
 
     /**
@@ -438,14 +486,10 @@ private void setUkuranThermal80mm() {
     private javax.swing.JButton btntutup;
     private javax.swing.JButton jButton2;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel10;
-    private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel13;
-    private javax.swing.JLabel jLabel14;
     private javax.swing.JLabel jLabel15;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel8;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSeparator jSeparator1;
@@ -453,6 +497,8 @@ private void setUkuranThermal80mm() {
     private javax.swing.JSeparator jSeparator3;
     private javax.swing.JSeparator jSeparator4;
     private javax.swing.JSeparator jSeparator5;
+    private javax.swing.JLabel lbl1;
+    private javax.swing.JLabel lbl2;
     private javax.swing.JLabel lblBayar;
     private javax.swing.JLabel lblKasir;
     private javax.swing.JLabel lblKembali;
@@ -460,5 +506,6 @@ private void setUkuranThermal80mm() {
     private javax.swing.JLabel lblTransaksi;
     private javax.swing.JLabel lblWaktu;
     private javax.swing.JTable tblDetail;
+    private javax.swing.JLabel txt3;
     // End of variables declaration//GEN-END:variables
 }
