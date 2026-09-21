@@ -1,11 +1,56 @@
 package modern_pos.dao;
 
+import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import modern_pos.TestDb;
+import modern_pos.model.Barang;
+import modern_pos.model.CartItem;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
 public class TransaksiDAOTest {
+
+    private static Barang barang(String kode, String nama, int harga, int stokDiLayar) {
+        Barang b = new Barang();
+        b.setKodeBarang(kode);
+        b.setNamaBarang(nama);
+        b.setHarga(harga);
+        b.setStok(stokDiLayar);
+        return b;
+    }
+
+    @Test
+    public void checkoutSuksesMengurangiStokDanMencatatSemuaTabel() throws Exception {
+        TestDb.reset();
+        CartItem item = new CartItem(barang("B001", "Beras 5kg", 65000, 10), 3);
+        new TransaksiDAO().simpanTransaksi(Arrays.asList(item), 195000, 200000, 5000, "Budi");
+
+        assertEquals(7, TestDb.queryInt("SELECT stok FROM barang WHERE kode_barang='B001'"));
+        assertEquals(1, TestDb.queryInt("SELECT COUNT(*) FROM transaksi"));
+        assertEquals(1, TestDb.queryInt("SELECT COUNT(*) FROM transaksi_detail"));
+        assertEquals(1, TestDb.queryInt("SELECT COUNT(*) FROM log_transaksi"));
+    }
+
+    @Test
+    public void checkoutStokKurangDitolakTanpaSisaData() throws Exception {
+        TestDb.reset();
+        // Layar masih menampilkan stok lama (5), padahal di DB tinggal 2.
+        CartItem beras = new CartItem(barang("B001", "Beras 5kg", 65000, 10), 1);
+        CartItem gula = new CartItem(barang("B002", "Gula 1kg", 15000, 5), 3);
+        try {
+            new TransaksiDAO().simpanTransaksi(Arrays.asList(beras, gula), 110000, 110000, 0, "Budi");
+            fail("harus menolak stok kurang");
+        } catch (SQLException e) {
+            assertTrue(e.getMessage(), e.getMessage().contains("Stok Gula 1kg tidak cukup"));
+        }
+        assertEquals(2, TestDb.queryInt("SELECT stok FROM barang WHERE kode_barang='B002'"));
+        assertEquals(10, TestDb.queryInt("SELECT stok FROM barang WHERE kode_barang='B001'"));
+        assertEquals(0, TestDb.queryInt("SELECT COUNT(*) FROM transaksi"));
+        assertEquals(0, TestDb.queryInt("SELECT COUNT(*) FROM transaksi_detail"));
+        assertEquals(0, TestDb.queryInt("SELECT COUNT(*) FROM log_transaksi"));
+    }
 
     @Test
     public void kodeTransaksiUnikDanMuatVarchar20() {
