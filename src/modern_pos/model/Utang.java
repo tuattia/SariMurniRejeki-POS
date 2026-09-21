@@ -21,6 +21,8 @@ public class Utang {
     public void setJumlahCicilan(int jumlahCicilan) { this.jumlahCicilan = jumlahCicilan; }
     public LocalDate getJatuhTempo() { return jatuhTempo; }
     public void setJatuhTempo(LocalDate jatuhTempo) { this.jatuhTempo = jatuhTempo; }
+    public String getKodeBarang() { return kodeBarang; }
+    public void setKodeBarang(String kodeBarang) { this.kodeBarang = kodeBarang; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
 }

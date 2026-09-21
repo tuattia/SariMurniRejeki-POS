@@ -13,4 +13,7 @@ public class Barang {
     public void setHarga(int harga) { this.harga = harga; }
     public int getStok() { return stok; }
     public void setStok(int stok) { this.stok = stok; }
+
+    @Override
+    public String toString() { return kodeBarang + " - " + namaBarang; }
 }

@@ -12,6 +12,8 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
+import modern_pos.model.Barang;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -180,6 +182,16 @@ public class UtangView extends JFrame {
         JTextField txtDp = SwingHelper.createMaterialTextField();
         JTextField txtCicilan = SwingHelper.createMaterialTextField();
         JTextField txtJatuhTempo = SwingHelper.createMaterialTextField();
+        JComboBox<Barang> cmbBarang = new JComboBox<>();
+        try {
+            for (Barang b : controller.daftarBarang()) {
+                cmbBarang.addItem(b);
+                if (isEdit && b.getKodeBarang().equals(u.getKodeBarang())) cmbBarang.setSelectedItem(b);
+            }
+        } catch (Exception ex) {
+            showError("Gagal memuat daftar barang: " + ex.getMessage());
+            return;
+        }
 
         if (isEdit) {
             txtKode.setText(u.getKodeUtang()); txtKode.setEnabled(false);
@@ -193,10 +205,11 @@ public class UtangView extends JFrame {
             txtKode.setText("UTG-" + new java.text.SimpleDateFormat("yyyyMMddHHmmss").format(new java.util.Date())); txtKode.setEnabled(false); txtJatuhTempo.setText(LocalDate.now().plusMonths(1).toString()); // Default 1 bulan kedepan
         }
 
-        JPanel panel = new JPanel(new GridLayout(7, 2, 10, 10));
+        JPanel panel = new JPanel(new GridLayout(8, 2, 10, 10));
         panel.add(SwingHelper.createLabel("Kode Utang:", UITheme.FONT_BODY, UITheme.COLOR_TEXT_PRIMARY)); panel.add(txtKode);
         panel.add(SwingHelper.createLabel("Nama Pelanggan:", UITheme.FONT_BODY, UITheme.COLOR_TEXT_PRIMARY)); panel.add(txtNama);
         panel.add(SwingHelper.createLabel("Telepon:", UITheme.FONT_BODY, UITheme.COLOR_TEXT_PRIMARY)); panel.add(txtTelp);
+        panel.add(SwingHelper.createLabel("Barang:", UITheme.FONT_BODY, UITheme.COLOR_TEXT_PRIMARY)); panel.add(cmbBarang);
         panel.add(SwingHelper.createLabel("Total Utang (Rp):", UITheme.FONT_BODY, UITheme.COLOR_TEXT_PRIMARY)); panel.add(txtHarga);
         panel.add(SwingHelper.createLabel("DP (Rp):", UITheme.FONT_BODY, UITheme.COLOR_TEXT_PRIMARY)); panel.add(txtDp);
         panel.add(SwingHelper.createLabel("Jumlah Cicilan (x):", UITheme.FONT_BODY, UITheme.COLOR_TEXT_PRIMARY)); panel.add(txtCicilan);
@@ -209,12 +222,15 @@ public class UtangView extends JFrame {
                 try {
                     // Validasi Dasar
                     if (txtNama.getText().trim().isEmpty()) throw new Exception("Nama pelanggan tidak boleh kosong!");
+                    Barang barangDipilih = (Barang) cmbBarang.getSelectedItem();
+                    if (barangDipilih == null) throw new Exception("Pilih barang yang diutang!");
                     
                     Utang newU = new Utang();
                     newU.setKodeUtang(txtKode.getText());
                     newU.setNama(txtNama.getText());
                     newU.setTelepon(txtTelp.getText());
                     newU.setAlamat("-"); // Optional
+                    newU.setKodeBarang(barangDipilih.getKodeBarang());
                     String hStr = txtHarga.getText().replaceAll("[^0-9]", ""); newU.setHargaBarang(hStr.isEmpty() ? 0 : Integer.parseInt(hStr));
                     String dStr = txtDp.getText().replaceAll("[^0-9]", ""); newU.setDp(dStr.isEmpty() ? 0 : Integer.parseInt(dStr));
                     String cStr = txtCicilan.getText().replaceAll("[^0-9]", ""); newU.setJumlahCicilan(cStr.isEmpty() ? 0 : Integer.parseInt(cStr));

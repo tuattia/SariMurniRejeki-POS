@@ -1,5 +1,8 @@
 package modern_pos.controller;
+import java.sql.SQLException;
 import java.util.List;
+import modern_pos.dao.BarangDAO;
+import modern_pos.model.Barang;
 import javax.swing.SwingWorker;
 import modern_pos.dao.UtangDAO;
 import modern_pos.model.Utang;
@@ -28,6 +31,11 @@ public class UtangController {
             }
         };
         worker.execute();
+    }
+
+    // ponytail: dipanggil sinkron di EDT saat form dibuka; tabel barang kecil. Pindah ke SwingWorker bila terasa lambat.
+    public List<Barang> daftarBarang() throws SQLException {
+        return new BarangDAO().getAllBarang("");
     }
 
     public void simpanUtang(final Utang u, final boolean isEdit) {
