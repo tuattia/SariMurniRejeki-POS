@@ -2,12 +2,15 @@ package modern_pos.controller;
 import java.util.List;
 import javax.swing.SwingWorker;
 import modern_pos.dao.BarangDAO;
+import modern_pos.dao.StokDAO;
+import modern_pos.model.StockMovement;
 import modern_pos.model.Barang;
 import modern_pos.view.StockView;
 
 public class StockController {
     private StockView view;
     private final BarangDAO dao;
+    private final StokDAO stokDAO = new StokDAO();
 
     public StockController() {
         this.dao = new BarangDAO();
@@ -30,6 +33,43 @@ public class StockController {
                     view.populateTable(get());
                 } catch (Exception ex) {
                     view.showError("Gagal memuat data stock: " + ex.getMessage());
+                }
+            }
+        };
+        worker.execute();
+    }
+
+    public void restock(final String kode, final int qty, final String ket) {
+        SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+            @Override protected Void doInBackground() throws Exception {
+                stokDAO.restock(kode, qty, ket);
+                return null;
+            }
+            @Override protected void done() {
+                try {
+                    get();
+                    view.showSuccess("Restock berhasil!");
+                } catch (Exception ex) {
+                    Throwable c = ex.getCause() != null ? ex.getCause() : ex;
+                    view.showError("Gagal restock: " + c.getMessage());
+                }
+                loadData("");
+            }
+        };
+        worker.execute();
+    }
+
+    public void tampilRiwayat(final Barang b) {
+        SwingWorker<List<StockMovement>, Void> worker = new SwingWorker<List<StockMovement>, Void>() {
+            @Override protected List<StockMovement> doInBackground() throws Exception {
+                return stokDAO.riwayat(b.getKodeBarang());
+            }
+            @Override protected void done() {
+                try {
+                    view.showRiwayat(b, get());
+                } catch (Exception ex) {
+                    Throwable c = ex.getCause() != null ? ex.getCause() : ex;
+                    view.showError("Gagal memuat riwayat: " + c.getMessage());
                 }
             }
         };

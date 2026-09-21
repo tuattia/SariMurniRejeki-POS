@@ -21,6 +21,7 @@ import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
 import modern_pos.controller.StockController;
 import modern_pos.model.Barang;
+import modern_pos.model.StockMovement;
 import modern_pos.utils.SwingHelper;
 import modern_pos.utils.UITheme;
 
@@ -99,6 +100,10 @@ public class StockView extends JFrame {
         JButton btnEdit = SwingHelper.createFlatButton("Edit", UITheme.COLOR_PRIMARY, UITheme.COLOR_PRIMARY_DARK);
         JButton btnHapus = SwingHelper.createFlatButton("Hapus", UITheme.COLOR_DANGER, new Color(198, 40, 40));
         JButton btnSnapshot = SwingHelper.createFlatButton("Stock Snapshot", new Color(156, 39, 176), new Color(123, 31, 162));
+        JButton btnRestock = SwingHelper.createFlatButton("Restock", UITheme.COLOR_SUCCESS, new Color(56, 142, 60));
+        JButton btnRiwayat = SwingHelper.createFlatButton("Riwayat", UITheme.COLOR_WARNING, new Color(230, 81, 0));
+        btnRestock.setPreferredSize(new Dimension(110, 35));
+        btnRiwayat.setPreferredSize(new Dimension(110, 35));
         
         // Atur ukuran lebar tombol secara manual agar proporsional
         btnTambah.setPreferredSize(new Dimension(120, 35));
@@ -106,6 +111,8 @@ public class StockView extends JFrame {
         btnHapus.setPreferredSize(new Dimension(100, 35));
         btnSnapshot.setPreferredSize(new Dimension(150, 35));
 
+        actionPanel.add(btnRiwayat);
+        actionPanel.add(btnRestock);
         actionPanel.add(btnSnapshot);
         actionPanel.add(btnHapus);
         actionPanel.add(btnEdit);
@@ -172,6 +179,29 @@ public class StockView extends JFrame {
             }
         });
 
+        btnRestock.addActionListener(e -> {
+            int row = tblStock.getSelectedRow();
+            if (row == -1) { showError("Pilih barang yang ingin di-restock!"); return; }
+            Barang b = currentList.get(row);
+            JTextField txtQty = SwingHelper.createMaterialTextField();
+            JTextField txtKet = SwingHelper.createMaterialTextField();
+            JPanel p = new JPanel(new GridLayout(2, 2, 10, 10));
+            p.add(SwingHelper.createLabel("Qty masuk:", UITheme.FONT_BODY, UITheme.COLOR_TEXT_PRIMARY)); p.add(txtQty);
+            p.add(SwingHelper.createLabel("Keterangan:", UITheme.FONT_BODY, UITheme.COLOR_TEXT_PRIMARY)); p.add(txtKet);
+            int res = JOptionPane.showConfirmDialog(this, p, "Restock " + b.getNamaBarang(), JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+            if (res != JOptionPane.OK_OPTION) return;
+            String q = txtQty.getText().replaceAll("[^0-9]", "");
+            int qty = q.isEmpty() ? 0 : Integer.parseInt(q);
+            if (qty <= 0) { showError("Qty restock harus lebih dari 0!"); return; }
+            controller.restock(b.getKodeBarang(), qty, txtKet.getText());
+        });
+
+        btnRiwayat.addActionListener(e -> {
+            int row = tblStock.getSelectedRow();
+            if (row == -1) { showError("Pilih barang yang ingin dilihat riwayatnya!"); return; }
+            controller.tampilRiwayat(currentList.get(row));
+        });
+
         btnSnapshot.addActionListener(e -> {
             // TODO: Integrasi dengan snapshotDialog yang dibuat pada sesi sebelumnya
             try { new gui.snapshotDialog(this, true).setVisible(true); } catch(Exception ex) { showError("Gagal memuat Snapshot: " + ex.getMessage()); }
@@ -213,6 +243,10 @@ public class StockView extends JFrame {
                 showError("Input harga dan stok harus berupa angka!");
             }
         }
+    }
+
+    public void showRiwayat(Barang b, List<StockMovement> list) {
+        new RiwayatStokDialog(this, b, list).setVisible(true);
     }
 
     public void populateTable(List<Barang> list) {
