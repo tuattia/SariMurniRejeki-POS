@@ -190,9 +190,9 @@ public class StockView extends JFrame {
             p.add(SwingHelper.createLabel("Keterangan:", UITheme.FONT_BODY, UITheme.COLOR_TEXT_PRIMARY)); p.add(txtKet);
             int res = JOptionPane.showConfirmDialog(this, p, "Restock " + b.getNamaBarang(), JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
             if (res != JOptionPane.OK_OPTION) return;
-            String q = txtQty.getText().replaceAll("[^0-9]", "");
-            int qty = q.isEmpty() ? 0 : Integer.parseInt(q);
-            if (qty <= 0) { showError("Qty restock harus lebih dari 0!"); return; }
+            int qty;
+            try { qty = modern_pos.utils.Angka.parseQty(txtQty.getText()); }
+            catch (IllegalArgumentException ex) { showError(ex.getMessage()); return; }
             controller.restock(b.getKodeBarang(), qty, txtKet.getText());
         });
 

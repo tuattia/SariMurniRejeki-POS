@@ -207,17 +207,7 @@ public class UtangView extends JFrame {
             txtKode.setText("UTG-" + new java.text.SimpleDateFormat("yyyyMMddHHmmss").format(new java.util.Date())); txtKode.setEnabled(false); txtJatuhTempo.setText(LocalDate.now().plusMonths(1).toString()); // Default 1 bulan kedepan
         }
 
-        // Total utang otomatis harga_jual x qty saat barang/qty diubah; tetap bisa diketik manual (harga kredit).
-        Runnable isiTotal = () -> {
-            Barang dipilih = (Barang) cmbBarang.getSelectedItem();
-            String q = txtQty.getText().replaceAll("[^0-9]", "");
-            if (dipilih != null && !q.isEmpty()) txtHarga.setText(String.valueOf(dipilih.getHarga() * Integer.parseInt(q)));
-        };
-        cmbBarang.addActionListener(e -> isiTotal.run());
-        txtQty.addKeyListener(new KeyAdapter() {
-            @Override public void keyReleased(KeyEvent e) { isiTotal.run(); }
-        });
-        if (!isEdit) isiTotal.run();
+        pasangTotalOtomatis(cmbBarang, txtQty, txtHarga, !isEdit);
 
         JPanel panel = new JPanel(new GridLayout(9, 2, 10, 10));
         panel.add(SwingHelper.createLabel("Kode Utang:", UITheme.FONT_BODY, UITheme.COLOR_TEXT_PRIMARY)); panel.add(txtKode);
@@ -246,10 +236,7 @@ public class UtangView extends JFrame {
                     newU.setTelepon(txtTelp.getText());
                     newU.setAlamat("-"); // Optional
                     newU.setKodeBarang(barangDipilih.getKodeBarang());
-                    String qStr = txtQty.getText().replaceAll("[^0-9]", "");
-                    int qty = qStr.isEmpty() ? 0 : Integer.parseInt(qStr);
-                    if (qty < 1) throw new Exception("Qty minimal 1!");
-                    newU.setQty(qty);
+                    newU.setQty(modern_pos.utils.Angka.parseQty(txtQty.getText()));
                     String hStr = txtHarga.getText().replaceAll("[^0-9]", ""); newU.setHargaBarang(hStr.isEmpty() ? 0 : Integer.parseInt(hStr));
                     String dStr = txtDp.getText().replaceAll("[^0-9]", ""); newU.setDp(dStr.isEmpty() ? 0 : Integer.parseInt(dStr));
                     String cStr = txtCicilan.getText().replaceAll("[^0-9]", ""); newU.setJumlahCicilan(cStr.isEmpty() ? 0 : Integer.parseInt(cStr));
@@ -264,6 +251,40 @@ public class UtangView extends JFrame {
             } else {
                 formValid = true; // Tombol Batal/Silang ditekan, keluar dari loop 
             }
+        }
+    }
+
+    // Total utang otomatis harga_jual x qty saat barang/qty diubah; tetap bisa diketik manual (harga kredit).
+    // Hanya dihitung ulang saat qty (angka valid) atau barang benar-benar berubah, supaya Tab/klik
+    // tidak menimpa total yang diketik manual.
+    static void pasangTotalOtomatis(JComboBox<Barang> cmb, JTextField txtQty, JTextField txtHarga, boolean hitungSekarang) {
+        final int[] qtyTerakhir = { qtyAtauNol(txtQty) };
+        Runnable isiTotal = () -> {
+            Barang dipilih = (Barang) cmb.getSelectedItem();
+            int q = qtyAtauNol(txtQty);
+            if (dipilih != null && q > 0) txtHarga.setText(String.valueOf(dipilih.getHarga() * q));
+        };
+        cmb.addItemListener(e -> { if (e.getStateChange() == java.awt.event.ItemEvent.SELECTED) isiTotal.run(); });
+        txtQty.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            private void cek() {
+                int q = qtyAtauNol(txtQty);
+                if (q > 0 && q != qtyTerakhir[0]) {
+                    qtyTerakhir[0] = q;
+                    isiTotal.run();
+                }
+            }
+            @Override public void insertUpdate(javax.swing.event.DocumentEvent e) { cek(); }
+            @Override public void removeUpdate(javax.swing.event.DocumentEvent e) { cek(); }
+            @Override public void changedUpdate(javax.swing.event.DocumentEvent e) { cek(); }
+        });
+        if (hitungSekarang) isiTotal.run();
+    }
+
+    private static int qtyAtauNol(JTextField f) {
+        try {
+            return modern_pos.utils.Angka.parseQty(f.getText());
+        } catch (IllegalArgumentException e) {
+            return 0;
         }
     }
 
