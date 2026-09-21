@@ -68,7 +68,7 @@ public List<StockMovement> riwayat(String kodeBarang) throws SQLException
 | `UtangDAO.hapusUtang`, status `belum` | MASUK qty | `Utang dihapus <kode_utang>` |
 | `UtangDAO.hapusUtang`, status `lunas` | tidak ada (barang sudah milik pelanggan) | — |
 | `BarangDAO.tambahBarang`, stok > 0 | MASUK stok | `Stok awal` |
-| `BarangDAO.updateBarang`, stok berubah | KOREKSI selisih (tanda arah terlihat dari sebelum/sesudah) | `Koreksi manual` |
+| `BarangDAO.updateBarang(Barang, int stokSebelumEdit)`, stok berubah | KOREKSI `b.stok - stokSebelumEdit` (relatif, jadi penjualan yang terjadi selama form terbuka tidak tertimpa) | `Koreksi manual` |
 
 - `simpanTransaksi` mengganti `UPDATE ... AND stok >= ?` dengan `ubahStok`;
   pesan error tetap `"Stok <nama> tidak cukup"` (test sub-proyek 1 tetap lulus).
@@ -110,9 +110,11 @@ public List<StockMovement> riwayat(String kodeBarang) throws SQLException
 
 - `modern_pos.dao.SnapshotDAO`, port dari `controller.snapshotcontroller`:
   `ambilSnapshotBulan(YearMonth)`, `sudahAdaSnapshot(YearMonth)`,
-  `getSnapshotByBulan(YearMonth)` → `List<StockSnapshot>`,
-  `getDaftarPeriodeTersedia()` → `List<YearMonth>`. Semua `throws SQLException`,
-  `koneksi.open()` + try-with-resources.
+  `getSnapshotByBulan(YearMonth)` → `List<StockSnapshot>`. Semua
+  `throws SQLException`, `koneksi.open()` + try-with-resources.
+  (`getDaftarPeriodeTersedia` lama tidak dipakai dialog, tidak di-port.)
+- `tambahBarang` dengan stok awal negatif ditolak
+  (`IllegalArgumentException("Stok tidak boleh negatif")`).
 - `satuan` diambil dari `barang.satuan` (`COALESCE(satuan, 'pcs')`), bukan
   literal `'Pcs'`.
 - Model `modern_pos.model.StockSnapshot` (field sesuai tabel yang ditampilkan dialog).
@@ -128,7 +130,8 @@ public List<StockMovement> riwayat(String kodeBarang) throws SQLException
    `modern_pos.dao.Tx.rollbackQuietly(Connection, SQLException)` →
    `addSuppressed`; dipakai di semua DAO bertransaksi.
 4. `run-tests.ps1` men-set `-Ddb.url=...sarimurnirejeki_test`; `project.properties`
-   `run.test.jvmargs` sama. `TestDb` tetap menjaga `_test`.
+   `test-sys-prop.db.url` sama (mekanisme NetBeans untuk system property test).
+   `TestDb` tetap menjaga `_test`.
 5. `DashboardController.setView`: `currentUser == null` → tampil `"-"`.
 
 ## Test
