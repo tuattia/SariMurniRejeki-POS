@@ -202,10 +202,7 @@ public class StockView extends JFrame {
             controller.tampilRiwayat(currentList.get(row));
         });
 
-        btnSnapshot.addActionListener(e -> {
-            // TODO: Integrasi dengan snapshotDialog yang dibuat pada sesi sebelumnya
-            try { new gui.snapshotDialog(this, true).setVisible(true); } catch(Exception ex) { showError("Gagal memuat Snapshot: " + ex.getMessage()); }
-        });
+        btnSnapshot.addActionListener(e -> new SnapshotDialog(this).setVisible(true));
     }
 
     private void showFormDialog(Barang b) {
