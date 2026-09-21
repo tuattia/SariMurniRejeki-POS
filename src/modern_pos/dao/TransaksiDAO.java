@@ -8,6 +8,15 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class TransaksiDAO {
+    private static long lastKode;
+
+    // TRX + yyMMddHHmmssSSS + 2 digit urutan = 20 char (kolom kode_transaksi varchar(20)).
+    // Nilai selalu naik, jadi unik dalam satu JVM walau > 100 panggilan per milidetik.
+    public static synchronized String newKodeTransaksi() {
+        lastKode = Math.max(System.currentTimeMillis() * 100, lastKode + 1);
+        String waktu = new SimpleDateFormat("yyMMddHHmmssSSS").format(new Date(lastKode / 100));
+        return "TRX" + waktu + String.format("%02d", lastKode % 100);
+    }
 
     public void simpanTransaksi(List<CartItem> cart, int total, int bayar, int kembali, String pelanggan) throws Exception {
         Connection con = koneksi.getConnection();
