@@ -1,56 +1,34 @@
 package config;
 
-import java.sql. Connection;
-import java.sql. DriverManager;
-import java. sql.SQLException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 
 /**
  * @author attia
  */
-
 public class koneksi {
-    private static final String URL = "jdbc:mysql://localhost:3306/sarimurnirejeki";
-    private static final String USER = "root";
-    private static final String PASS = "";
-    private static final String DRIVER = "com.mysql.cj.jdbc.Driver";
+    private static final String DEFAULT_URL = "jdbc:mysql://localhost:3306/sarimurnirejeki";
+    private static final String DEFAULT_USER = "root";
+    private static final String DEFAULT_PASS = "";
 
-    // Static initializer untuk load driver sekali saja
-    static {
-        try {
-            Class.forName(DRIVER);
-            System.out.println("✓ JDBC Driver loaded");
-        } catch (ClassNotFoundException e) {
-            System.out.println("✗ JDBC Driver not found: " + e. getMessage());
-            e.printStackTrace();
-        }
+    // Koneksi baru tiap panggilan; pemanggil wajib menutupnya (try-with-resources).
+    // Bisa di-override lewat -Ddb.url / -Ddb.user / -Ddb.pass (dipakai test).
+    public static Connection open() throws SQLException {
+        return DriverManager.getConnection(
+                System.getProperty("db.url", DEFAULT_URL),
+                System.getProperty("db.user", DEFAULT_USER),
+                System.getProperty("db.pass", DEFAULT_PASS));
     }
 
-    // Method untuk buat connection BARU setiap kali dipanggil
+    // Dipakai stack lama (gui/, controller/): return null bila gagal. Hapus di sub-proyek 4.
     public static Connection getConnection() {
         try {
-            Connection con = DriverManager.getConnection(URL, USER, PASS);
-            System.out.println("✓ New connection created");
-            return con;
+            return open();
         } catch (SQLException e) {
-            System.out.println("✗ Connection failed: " + e.getMessage());
+            System.out.println("Koneksi gagal: " + e.getMessage());
             e.printStackTrace();
             return null;
         }
-    }
-
-    // Method untuk test connection
-    public static boolean testConnection() {
-        Connection con = null;
-        try {
-            con = getConnection();
-            if (con != null && ! con.isClosed()) {
-                System.out.println("✓ Connection test OK");
-                con.close();
-                return true;
-            }
-        } catch (SQLException e) {
-            System.out.println("✗ Connection test FAILED: " + e.getMessage());
-        }
-        return false;
     }
 }
