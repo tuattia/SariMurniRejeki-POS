@@ -3,6 +3,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.SwingWorker;
 import modern_pos.dao.TransaksiDAO;
+import modern_pos.dao.BarangDAO;
 import modern_pos.model.Barang;
 import modern_pos.model.CartItem;
 import modern_pos.view.TransaksiView;
@@ -10,6 +11,7 @@ import modern_pos.view.TransaksiView;
 public class TransaksiController {
     private TransaksiView view;
     private final TransaksiDAO dao;
+    private final BarangDAO barangDAO = new BarangDAO();
     private final List<CartItem> cart;
 
     public TransaksiController() {
@@ -25,7 +27,7 @@ public class TransaksiController {
     public void loadBarang(String keyword) {
         SwingWorker<List<Barang>, Void> worker = new SwingWorker<List<Barang>, Void>() {
             @Override protected List<Barang> doInBackground() throws Exception {
-                return dao.getBarangList(keyword);
+                return barangDAO.getAllBarang(keyword);
             }
             @Override protected void done() {
                 try {

@@ -1,55 +1,13 @@
 package modern_pos.dao;
 import config.koneksi;
-import modern_pos.model.Barang;
 import modern_pos.model.CartItem;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.util.ArrayList;
 import java.util.List;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class TransaksiDAO {
-
-    public List<Barang> getBarangList(String keyword) throws Exception {
-        List<Barang> list = new ArrayList<>();
-        Connection con = koneksi.getConnection();
-        String sql = "SELECT * FROM barang ";
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            sql += "WHERE kode_barang LIKE ? OR nama_barang LIKE ? OR nama_barang LIKE ?"; 
-        }
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
-            if (keyword != null && !keyword.trim().isEmpty()) {
-                ps.setString(1, "%" + keyword + "%");
-                ps.setString(2, "%" + keyword + "%");
-                ps.setString(3, "%" + keyword + "%");
-            }
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    Barang b = new Barang();
-                    b.setKodeBarang(rs.getString("kode_barang"));
-                    
-                    // Antisipasi nama kolom "nama" atau "nama_barang"
-                    try { b.setNamaBarang(rs.getString("nama_barang")); } 
-                    catch (Exception e) { b.setNamaBarang(rs.getString("nama")); }
-                    
-                    // Antisipasi nama kolom "harga" atau "harga_jual"
-                    try { b.setHarga(rs.getInt("harga_jual")); } 
-                    catch (Exception e) { b.setHarga(rs.getInt("harga")); }
-                    
-                    // Antisipasi nama kolom "stok" atau "jumlah"
-                    try { b.setStok(rs.getInt("stok")); } 
-                    catch (Exception e) { 
-                        try { b.setStok(rs.getInt("jumlah")); } catch (Exception ex) { b.setStok(999); }
-                    }
-                    
-                    list.add(b);
-                }
-            }
-        }
-        return list;
-    }
 
     public void simpanTransaksi(List<CartItem> cart, int total, int bayar, int kembali, String pelanggan) throws Exception {
         Connection con = koneksi.getConnection();
