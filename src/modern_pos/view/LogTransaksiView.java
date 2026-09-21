@@ -75,7 +75,7 @@ public class LogTransaksiView extends JFrame {
         add(sidebar, BorderLayout.WEST);
 
         // --- NAVIGASI ---
-        btnDash.addActionListener(e -> { this.dispose(); new DashboardView(new modern_pos.controller.DashboardController(new modern_pos.model.User())).setVisible(true); });
+        btnDash.addActionListener(e -> { this.dispose(); new DashboardView(new modern_pos.controller.DashboardController(modern_pos.utils.Session.currentUser)).setVisible(true); });
         btnTrans.addActionListener(e -> { this.dispose(); new TransaksiView(new modern_pos.controller.TransaksiController()).setVisible(true); });
         btnStock.addActionListener(e -> { this.dispose(); new StockView(new modern_pos.controller.StockController()).setVisible(true); });
         btnUtang.addActionListener(e -> { this.dispose(); new UtangView(new modern_pos.controller.UtangController()).setVisible(true); });

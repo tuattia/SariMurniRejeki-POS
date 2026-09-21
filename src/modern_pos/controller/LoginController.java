@@ -30,6 +30,7 @@ public class LoginController {
                 view.setLoading(false);
                 try {
                     User loggedInUser = get();
+                    modern_pos.utils.Session.currentUser = loggedInUser;
                     view.dispose(); 
                     
                     // Buka Dashboard Modern

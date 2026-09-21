@@ -25,6 +25,7 @@ public class LoginView extends JFrame {
     private LoginController controller;
 
     public LoginView() {
+        modern_pos.utils.Session.currentUser = null; // semua jalur logout membuka LoginView
         controller = new LoginController();
         controller.setView(this); 
         initUI();

@@ -82,7 +82,7 @@ public class TransaksiView extends JFrame {
         add(sidebar, BorderLayout.WEST);
         
         // --- EVENT NAVIGASI ---
-        btnDash.addActionListener(e -> { this.dispose(); new modern_pos.view.DashboardView(new modern_pos.controller.DashboardController(new modern_pos.model.User())).setVisible(true); });
+        btnDash.addActionListener(e -> { this.dispose(); new modern_pos.view.DashboardView(new modern_pos.controller.DashboardController(modern_pos.utils.Session.currentUser)).setVisible(true); });
         btnLogout.addActionListener(e -> { this.dispose(); new LoginView().setVisible(true); });
 
         // --- MAIN SPLIT CONTENT ---
