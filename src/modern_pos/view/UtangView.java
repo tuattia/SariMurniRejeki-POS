@@ -129,7 +129,7 @@ public class UtangView extends JFrame {
         searchPanel.add(txtSearch);
         tableContainer.add(searchPanel, BorderLayout.NORTH);
 
-        tableModel = new DefaultTableModel(new String[]{"Kode", "Nama", "Telepon", "Total", "DP", "Sisa Cicilan", "Jatuh Tempo", "Status"}, 0) {
+        tableModel = new DefaultTableModel(new String[]{"Kode", "Nama", "Telepon", "Qty", "Total", "DP", "Sisa Cicilan", "Jatuh Tempo", "Status"}, 0) {
             @Override public boolean isCellEditable(int row, int col) { return false; }
         };
         tblUtang = new JTable(tableModel);
@@ -192,6 +192,8 @@ public class UtangView extends JFrame {
             showError("Gagal memuat daftar barang: " + ex.getMessage());
             return;
         }
+        JTextField txtQty = SwingHelper.createMaterialTextField();
+        txtQty.setText(isEdit ? String.valueOf(u.getQty()) : "1");
 
         if (isEdit) {
             txtKode.setText(u.getKodeUtang()); txtKode.setEnabled(false);
@@ -205,11 +207,24 @@ public class UtangView extends JFrame {
             txtKode.setText("UTG-" + new java.text.SimpleDateFormat("yyyyMMddHHmmss").format(new java.util.Date())); txtKode.setEnabled(false); txtJatuhTempo.setText(LocalDate.now().plusMonths(1).toString()); // Default 1 bulan kedepan
         }
 
-        JPanel panel = new JPanel(new GridLayout(8, 2, 10, 10));
+        // Total utang otomatis harga_jual x qty saat barang/qty diubah; tetap bisa diketik manual (harga kredit).
+        Runnable isiTotal = () -> {
+            Barang dipilih = (Barang) cmbBarang.getSelectedItem();
+            String q = txtQty.getText().replaceAll("[^0-9]", "");
+            if (dipilih != null && !q.isEmpty()) txtHarga.setText(String.valueOf(dipilih.getHarga() * Integer.parseInt(q)));
+        };
+        cmbBarang.addActionListener(e -> isiTotal.run());
+        txtQty.addKeyListener(new KeyAdapter() {
+            @Override public void keyReleased(KeyEvent e) { isiTotal.run(); }
+        });
+        if (!isEdit) isiTotal.run();
+
+        JPanel panel = new JPanel(new GridLayout(9, 2, 10, 10));
         panel.add(SwingHelper.createLabel("Kode Utang:", UITheme.FONT_BODY, UITheme.COLOR_TEXT_PRIMARY)); panel.add(txtKode);
         panel.add(SwingHelper.createLabel("Nama Pelanggan:", UITheme.FONT_BODY, UITheme.COLOR_TEXT_PRIMARY)); panel.add(txtNama);
         panel.add(SwingHelper.createLabel("Telepon:", UITheme.FONT_BODY, UITheme.COLOR_TEXT_PRIMARY)); panel.add(txtTelp);
         panel.add(SwingHelper.createLabel("Barang:", UITheme.FONT_BODY, UITheme.COLOR_TEXT_PRIMARY)); panel.add(cmbBarang);
+        panel.add(SwingHelper.createLabel("Qty:", UITheme.FONT_BODY, UITheme.COLOR_TEXT_PRIMARY)); panel.add(txtQty);
         panel.add(SwingHelper.createLabel("Total Utang (Rp):", UITheme.FONT_BODY, UITheme.COLOR_TEXT_PRIMARY)); panel.add(txtHarga);
         panel.add(SwingHelper.createLabel("DP (Rp):", UITheme.FONT_BODY, UITheme.COLOR_TEXT_PRIMARY)); panel.add(txtDp);
         panel.add(SwingHelper.createLabel("Jumlah Cicilan (x):", UITheme.FONT_BODY, UITheme.COLOR_TEXT_PRIMARY)); panel.add(txtCicilan);
@@ -231,6 +246,10 @@ public class UtangView extends JFrame {
                     newU.setTelepon(txtTelp.getText());
                     newU.setAlamat("-"); // Optional
                     newU.setKodeBarang(barangDipilih.getKodeBarang());
+                    String qStr = txtQty.getText().replaceAll("[^0-9]", "");
+                    int qty = qStr.isEmpty() ? 0 : Integer.parseInt(qStr);
+                    if (qty < 1) throw new Exception("Qty minimal 1!");
+                    newU.setQty(qty);
                     String hStr = txtHarga.getText().replaceAll("[^0-9]", ""); newU.setHargaBarang(hStr.isEmpty() ? 0 : Integer.parseInt(hStr));
                     String dStr = txtDp.getText().replaceAll("[^0-9]", ""); newU.setDp(dStr.isEmpty() ? 0 : Integer.parseInt(dStr));
                     String cStr = txtCicilan.getText().replaceAll("[^0-9]", ""); newU.setJumlahCicilan(cStr.isEmpty() ? 0 : Integer.parseInt(cStr));
@@ -255,7 +274,7 @@ public class UtangView extends JFrame {
         for (Utang u : list) {
             String statusLunas = "lunas".equalsIgnoreCase(u.getStatus()) ? "[ LUNAS ]" : "[ BELUM ]";
             tableModel.addRow(new Object[]{ 
-                u.getKodeUtang(), u.getNama(), u.getTelepon(), 
+                u.getKodeUtang(), u.getNama(), u.getTelepon(), u.getQty(),
                 "Rp " + nf.format(u.getHargaBarang()), "Rp " + nf.format(u.getDp()), 
                 u.getJumlahCicilan() + "x", (u.getJatuhTempo() != null) ? u.getJatuhTempo().toString() : "-",
                 statusLunas

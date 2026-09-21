@@ -1,5 +1,6 @@
 package modern_pos.dao;
 
+import java.sql.SQLException;
 import java.time.LocalDate;
 import modern_pos.TestDb;
 import modern_pos.model.Utang;
@@ -16,6 +17,97 @@ public class UtangDAOTest {
     }
 
     private static Utang utang(String kode, String kodeBarang, int harga, int dp) {
+        return utang(kode, kodeBarang, harga, dp, 1);
+    }
+
+    private static int stok(String kode) throws Exception {
+        return TestDb.queryInt("SELECT stok FROM barang WHERE kode_barang=?", kode);
+    }
+
+    @Test
+    public void tambahUtangMengurangiStokSebanyakQty() throws Exception {
+        dao.tambahUtang(utang("UTG-1", "B001", 130000, 30000, 2));
+
+        assertEquals(8, stok("B001"));
+        assertEquals(2, TestDb.queryInt("SELECT qty FROM utang WHERE kode_utang='UTG-1'"));
+        String kodeTrx = TestDb.queryString("SELECT kode_transaksi FROM utang WHERE kode_utang='UTG-1'");
+        assertEquals(1, TestDb.queryInt("SELECT COUNT(*) FROM stock_movement_log WHERE tipe_gerakan='KELUAR' AND qty=2 AND kode_transaksi=?", kodeTrx));
+        assertEquals(2, dao.getUtangList("").get(0).getQty());
+    }
+
+    @Test
+    public void tambahUtangStokKurangDitolakTanpaSisaData() throws Exception {
+        try {
+            dao.tambahUtang(utang("UTG-1", "B002", 45000, 0, 3));
+            fail("harus ditolak");
+        } catch (SQLException e) {
+            assertEquals("Stok Gula 1kg tidak cukup", e.getMessage());
+        }
+        assertEquals(2, stok("B002"));
+        assertEquals(0, TestDb.queryInt("SELECT COUNT(*) FROM utang"));
+        assertEquals(0, TestDb.queryInt("SELECT COUNT(*) FROM transaksi"));
+        assertEquals(0, TestDb.queryInt("SELECT COUNT(*) FROM log_transaksi"));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void qtyNolDitolak() throws Exception {
+        dao.tambahUtang(utang("UTG-1", "B001", 65000, 0, 0));
+    }
+
+    @Test
+    public void editQtyNaikTurunMenggerakkanSelisih() throws Exception {
+        dao.tambahUtang(utang("UTG-1", "B001", 130000, 0, 2));   // 10 -> 8
+        dao.updateUtang(utang("UTG-1", "B001", 325000, 0, 5));   // +3 -> 5
+        assertEquals(5, stok("B001"));
+        dao.updateUtang(utang("UTG-1", "B001", 65000, 0, 1));    // -4 -> 9
+        assertEquals(9, stok("B001"));
+        assertEquals(1, TestDb.queryInt("SELECT qty FROM utang WHERE kode_utang='UTG-1'"));
+    }
+
+    @Test
+    public void editQtyMelebihiStokDitolakTanpaPerubahan() throws Exception {
+        dao.tambahUtang(utang("UTG-1", "B002", 15000, 0, 1));    // 2 -> 1
+        try {
+            dao.updateUtang(utang("UTG-1", "B002", 45000, 0, 3)); // butuh +2, sisa 1
+            fail("harus ditolak");
+        } catch (SQLException e) {
+            assertEquals("Stok Gula 1kg tidak cukup", e.getMessage());
+        }
+        assertEquals(1, stok("B002"));
+        assertEquals(1, TestDb.queryInt("SELECT qty FROM utang WHERE kode_utang='UTG-1'"));
+        assertEquals(15000, TestDb.queryInt("SELECT harga_brng FROM utang WHERE kode_utang='UTG-1'"));
+    }
+
+    @Test
+    public void editGantiBarangMemindahkanStok() throws Exception {
+        dao.tambahUtang(utang("UTG-1", "B001", 130000, 0, 2));   // B001 10 -> 8
+        dao.updateUtang(utang("UTG-1", "B002", 15000, 0, 1));    // B001 -> 10, B002 2 -> 1
+        assertEquals(10, stok("B001"));
+        assertEquals(1, stok("B002"));
+    }
+
+    @Test(expected = SQLException.class)
+    public void editUtangTidakAdaDitolak() throws Exception {
+        dao.updateUtang(utang("TIDAK-ADA", "B001", 65000, 0, 1));
+    }
+
+    @Test
+    public void hapusUtangBelumLunasMengembalikanStok() throws Exception {
+        dao.tambahUtang(utang("UTG-1", "B001", 130000, 0, 2));
+        dao.hapusUtang("UTG-1");
+        assertEquals(10, stok("B001"));
+        assertEquals(1, TestDb.queryInt("SELECT COUNT(*) FROM stock_movement_log WHERE tipe_gerakan='MASUK' AND qty=2"));
+    }
+
+    @Test
+    public void hapusUtangLunasTidakMengembalikanStok() throws Exception {
+        dao.tambahUtang(utang("UTG-1", "B001", 130000, 0, 2));
+        dao.tandaiLunas("UTG-1");
+        dao.hapusUtang("UTG-1");
+        assertEquals(8, stok("B001"));
+    }
+
+    private static Utang utang(String kode, String kodeBarang, int harga, int dp, int qty) {
         Utang u = new Utang();
         u.setKodeUtang(kode);
         u.setNama("Siti");
@@ -26,6 +118,7 @@ public class UtangDAOTest {
         u.setJumlahCicilan(3);
         u.setJatuhTempo(LocalDate.of(2026, 12, 1));
         u.setKodeBarang(kodeBarang);
+        u.setQty(qty);
         return u;
     }
 

@@ -22,7 +22,7 @@ CREATE TABLE `barang` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id_barang`),
   UNIQUE KEY `kode_barang` (`kode_barang`)
-) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `log_transaksi`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -40,7 +40,7 @@ CREATE TABLE `log_transaksi` (
   PRIMARY KEY (`id_log`),
   KEY `kode_transaksi` (`kode_transaksi`),
   CONSTRAINT `log_transaksi_ibfk_1` FOREIGN KEY (`kode_transaksi`) REFERENCES `transaksi` (`kode_transaksi`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE=InnoDB AUTO_INCREMENT=32 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `stock_movement_log`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -73,7 +73,7 @@ CREATE TABLE `stock_snapshot` (
   `diperbarui_pada` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id_snapshot`),
   UNIQUE KEY `periode` (`periode`,`kode_barang`)
-) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `transaksi`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -88,7 +88,7 @@ CREATE TABLE `transaksi` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id_transaksi`),
   UNIQUE KEY `kode_transaksi` (`kode_transaksi`)
-) ENGINE=InnoDB AUTO_INCREMENT=75 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `transaksi_detail`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -105,7 +105,7 @@ CREATE TABLE `transaksi_detail` (
   KEY `kode_transaksi` (`kode_transaksi`),
   CONSTRAINT `transaksi_detail_ibfk_1` FOREIGN KEY (`kode_barang`) REFERENCES `barang` (`kode_barang`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT `transaksi_detail_ibfk_2` FOREIGN KEY (`kode_transaksi`) REFERENCES `transaksi` (`kode_transaksi`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE=InnoDB AUTO_INCREMENT=73 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `user`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -117,7 +117,7 @@ CREATE TABLE `user` (
   `password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `hakakses` varchar(30) NOT NULL,
   PRIMARY KEY (`id_user`)
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `utang`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -135,12 +135,13 @@ CREATE TABLE `utang` (
   `status` enum('lunas','belum') NOT NULL,
   `kode_transaksi` varchar(20) DEFAULT NULL,
   `kode_barang` varchar(20) NOT NULL,
+  `qty` int NOT NULL DEFAULT '1',
   PRIMARY KEY (`id_utang`),
   KEY `kode_transaksi` (`kode_transaksi`),
   KEY `kode_barang` (`kode_barang`),
   CONSTRAINT `utang_ibfk_1` FOREIGN KEY (`kode_transaksi`) REFERENCES `transaksi` (`kode_transaksi`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT `utang_ibfk_2` FOREIGN KEY (`kode_barang`) REFERENCES `barang` (`kode_barang`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 

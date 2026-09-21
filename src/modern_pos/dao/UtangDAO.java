@@ -34,6 +34,7 @@ public class UtangDAO {
                     u.setJumlahCicilan(rs.getInt("jumlah_cicilan"));
                     u.setStatus(rs.getString("status"));
                     u.setKodeBarang(rs.getString("kode_barang"));
+                    u.setQty(rs.getInt("qty"));
                     if (rs.getDate("jatuh_tempo") != null) u.setJatuhTempo(rs.getDate("jatuh_tempo").toLocalDate());
                     list.add(u);
                 }
@@ -43,6 +44,7 @@ public class UtangDAO {
     }
 
     public void tambahUtang(Utang u) throws SQLException {
+        if (u.getQty() < 1) throw new IllegalArgumentException("Qty minimal 1");
         String kodeTrx = TransaksiDAO.newKodeTransaksi();
         try (Connection con = koneksi.open()) {
             con.setAutoCommit(false);
@@ -57,7 +59,7 @@ public class UtangDAO {
                 }
 
                 // 2. Utang, terhubung ke barang yang dipilih dan transaksi di atas
-                String sql = "INSERT INTO utang (kode_utang, nama, alamat, telepon, harga_brng, dp, jumlah_cicilan, jatuh_tempo, status, kode_barang, kode_transaksi) VALUES (?,?,?,?,?,?,?,?,'belum',?,?)";
+                String sql = "INSERT INTO utang (kode_utang, nama, alamat, telepon, harga_brng, dp, jumlah_cicilan, jatuh_tempo, status, kode_barang, qty, kode_transaksi) VALUES (?,?,?,?,?,?,?,?,'belum',?,?,?)";
                 try (PreparedStatement ps = con.prepareStatement(sql)) {
                     ps.setString(1, u.getKodeUtang());
                     ps.setString(2, u.getNama());
@@ -68,11 +70,15 @@ public class UtangDAO {
                     ps.setInt(7, u.getJumlahCicilan());
                     ps.setDate(8, u.getJatuhTempo() != null ? java.sql.Date.valueOf(u.getJatuhTempo()) : null);
                     ps.setString(9, u.getKodeBarang());
-                    ps.setString(10, kodeTrx);
+                    ps.setInt(10, u.getQty());
+                    ps.setString(11, kodeTrx);
                     ps.executeUpdate();
                 }
 
-                // 3. Log
+                // 3. Barang dibawa pulang pelanggan: stok berkurang
+                StokDAO.ubahStok(con, u.getKodeBarang(), -u.getQty(), "KELUAR", kodeTrx, "Utang " + u.getKodeUtang());
+
+                // 4. Log
                 String sqlLog = "INSERT INTO log_transaksi (kode_transaksi, tanggal, nama_pelanggan, total, bayar, kembali, tipe_transaksi, keterangan) VALUES (?, NOW(), ?, ?, ?, 0, 'KREDIT', 'Utang Baru (DP)')";
                 try (PreparedStatement ps = con.prepareStatement(sqlLog)) {
                     ps.setString(1, kodeTrx);
@@ -90,26 +96,84 @@ public class UtangDAO {
     }
 
     public void updateUtang(Utang u) throws SQLException {
-        String sql = "UPDATE utang SET nama=?, alamat=?, telepon=?, harga_brng=?, dp=?, jumlah_cicilan=?, jatuh_tempo=?, kode_barang=? WHERE kode_utang=?";
-        try (Connection con = koneksi.open(); PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, u.getNama());
-            ps.setString(2, u.getAlamat());
-            ps.setString(3, u.getTelepon());
-            ps.setInt(4, u.getHargaBarang());
-            ps.setInt(5, u.getDp());
-            ps.setInt(6, u.getJumlahCicilan());
-            ps.setDate(7, u.getJatuhTempo() != null ? java.sql.Date.valueOf(u.getJatuhTempo()) : null);
-            ps.setString(8, u.getKodeBarang());
-            ps.setString(9, u.getKodeUtang());
-            ps.executeUpdate();
+        if (u.getQty() < 1) throw new IllegalArgumentException("Qty minimal 1");
+        String ket = "Edit utang " + u.getKodeUtang();
+        try (Connection con = koneksi.open()) {
+            con.setAutoCommit(false);
+            try {
+                String barangLama;
+                int qtyLama;
+                try (PreparedStatement ps = con.prepareStatement("SELECT kode_barang, qty FROM utang WHERE kode_utang = ? FOR UPDATE")) {
+                    ps.setString(1, u.getKodeUtang());
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (!rs.next()) throw new SQLException("Utang " + u.getKodeUtang() + " tidak ditemukan");
+                        barangLama = rs.getString("kode_barang");
+                        qtyLama = rs.getInt("qty");
+                    }
+                }
+
+                String sql = "UPDATE utang SET nama=?, alamat=?, telepon=?, harga_brng=?, dp=?, jumlah_cicilan=?, jatuh_tempo=?, kode_barang=?, qty=? WHERE kode_utang=?";
+                try (PreparedStatement ps = con.prepareStatement(sql)) {
+                    ps.setString(1, u.getNama());
+                    ps.setString(2, u.getAlamat());
+                    ps.setString(3, u.getTelepon());
+                    ps.setInt(4, u.getHargaBarang());
+                    ps.setInt(5, u.getDp());
+                    ps.setInt(6, u.getJumlahCicilan());
+                    ps.setDate(7, u.getJatuhTempo() != null ? java.sql.Date.valueOf(u.getJatuhTempo()) : null);
+                    ps.setString(8, u.getKodeBarang());
+                    ps.setInt(9, u.getQty());
+                    ps.setString(10, u.getKodeUtang());
+                    ps.executeUpdate();
+                }
+
+                // Edit = koreksi atas barang yang dibawa pelanggan, apa pun status utangnya.
+                if (barangLama.equals(u.getKodeBarang())) {
+                    int kembali = qtyLama - u.getQty();
+                    StokDAO.ubahStok(con, barangLama, kembali, kembali > 0 ? "MASUK" : "KELUAR", null, ket);
+                } else {
+                    StokDAO.ubahStok(con, barangLama, qtyLama, "MASUK", null, ket);
+                    StokDAO.ubahStok(con, u.getKodeBarang(), -u.getQty(), "KELUAR", null, ket);
+                }
+
+                con.commit();
+            } catch (SQLException e) {
+                throw Tx.rollbackQuietly(con, e);
+            }
         }
     }
 
     public void hapusUtang(String kode) throws SQLException {
-        String sql = "DELETE FROM utang WHERE kode_utang = ?";
-        try (Connection con = koneksi.open(); PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, kode);
-            ps.executeUpdate();
+        try (Connection con = koneksi.open()) {
+            con.setAutoCommit(false);
+            try {
+                String kodeBarang = null, status = null;
+                int qty = 0;
+                try (PreparedStatement ps = con.prepareStatement("SELECT kode_barang, qty, status FROM utang WHERE kode_utang = ? FOR UPDATE")) {
+                    ps.setString(1, kode);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            kodeBarang = rs.getString("kode_barang");
+                            qty = rs.getInt("qty");
+                            status = rs.getString("status");
+                        }
+                    }
+                }
+
+                try (PreparedStatement ps = con.prepareStatement("DELETE FROM utang WHERE kode_utang = ?")) {
+                    ps.setString(1, kode);
+                    ps.executeUpdate();
+                }
+
+                // Belum lunas: barang dianggap batal dibawa, stok kembali. Lunas: barang sudah milik pelanggan.
+                if ("belum".equals(status)) {
+                    StokDAO.ubahStok(con, kodeBarang, qty, "MASUK", null, "Utang dihapus " + kode);
+                }
+
+                con.commit();
+            } catch (SQLException e) {
+                throw Tx.rollbackQuietly(con, e);
+            }
         }
     }
 
