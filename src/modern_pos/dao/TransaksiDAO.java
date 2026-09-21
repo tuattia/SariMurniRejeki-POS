@@ -25,8 +25,6 @@ public class TransaksiDAO {
         String sqlT = "INSERT INTO transaksi (kode_transaksi, tanggal, nama_pelanggan, total, jenis_transaksi, created_at) VALUES (?, CURDATE(), ?, ?, 'TUNAI', NOW())";
         String sqlD = "INSERT INTO transaksi_detail (kode_transaksi, kode_barang, harga, qty, subtotal) VALUES (?,?,?,?,?)";
         String sqlL = "INSERT INTO log_transaksi (kode_transaksi, tanggal, nama_pelanggan, total, bayar, kembali, tipe_transaksi, keterangan) VALUES (?, NOW(), ?, ?, ?, ?, 'TUNAI', 'Selesai')";
-        // Kondisi stok >= qty mencegah stok minus walau layar menampilkan stok lama.
-        String sqlStok = "UPDATE barang SET stok = stok - ? WHERE kode_barang = ? AND stok >= ?";
 
         try (Connection con = koneksi.open()) {
             con.setAutoCommit(false);
@@ -38,16 +36,10 @@ public class TransaksiDAO {
                     psT.executeUpdate();
                 }
 
-                try (PreparedStatement psD = con.prepareStatement(sqlD);
-                     PreparedStatement psS = con.prepareStatement(sqlStok)) {
+                try (PreparedStatement psD = con.prepareStatement(sqlD)) {
                     for (CartItem item : cart) {
                         Barang b = item.getBarang();
-                        psS.setInt(1, item.getQty());
-                        psS.setString(2, b.getKodeBarang());
-                        psS.setInt(3, item.getQty());
-                        if (psS.executeUpdate() == 0) {
-                            throw new SQLException("Stok " + b.getNamaBarang() + " tidak cukup");
-                        }
+                        StokDAO.ubahStok(con, b.getKodeBarang(), -item.getQty(), "KELUAR", kodeTrx, "Penjualan");
 
                         psD.setString(1, kodeTrx);
                         psD.setString(2, b.getKodeBarang());

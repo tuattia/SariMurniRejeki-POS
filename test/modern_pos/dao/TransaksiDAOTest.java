@@ -50,6 +50,19 @@ public class TransaksiDAOTest {
         assertEquals(0, TestDb.queryInt("SELECT COUNT(*) FROM transaksi"));
         assertEquals(0, TestDb.queryInt("SELECT COUNT(*) FROM transaksi_detail"));
         assertEquals(0, TestDb.queryInt("SELECT COUNT(*) FROM log_transaksi"));
+        assertEquals(0, TestDb.queryInt("SELECT COUNT(*) FROM stock_movement_log"));
+    }
+
+    @Test
+    public void checkoutMencatatGerakanKeluarDenganKodeTransaksi() throws Exception {
+        TestDb.reset();
+        CartItem item = new CartItem(barang("B001", "Beras 5kg", 65000, 10), 3);
+        new TransaksiDAO().simpanTransaksi(Arrays.asList(item), 195000, 200000, 5000, "Budi");
+
+        String kodeTrx = TestDb.queryString("SELECT kode_transaksi FROM transaksi");
+        assertEquals(1, TestDb.queryInt("SELECT COUNT(*) FROM stock_movement_log WHERE tipe_gerakan='KELUAR' AND kode_transaksi=?", kodeTrx));
+        assertEquals(3, TestDb.queryInt("SELECT qty FROM stock_movement_log"));
+        assertEquals("Penjualan", TestDb.queryString("SELECT keterangan FROM stock_movement_log"));
     }
 
     @Test
