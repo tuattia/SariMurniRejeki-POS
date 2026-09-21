@@ -46,16 +46,16 @@ Sub-proyek 1 tidak menambah fitur dan tidak mengubah entry point.
 Setiap bug: tulis test gagal dulu, lalu fix (TDD).
 
 ### B1. Koneksi bocor + `null` connection
-- `config.koneksi.getConnection()` melempar `IllegalStateException` (unchecked,
-  membungkus `SQLException`) bila gagal, bukan `return null`. Unchecked dipilih
-  supaya signature tidak berubah dan stack lama tetap ter-compile.
-  URL/USER/PASS bisa di-override lewat system property `db.url`, `db.user`,
-  `db.pass`; default tetap nilai sekarang.
-- Semua DAO `modern_pos` memakai `try (Connection con = koneksi.getConnection())`.
+- Method baru `config.koneksi.open() throws SQLException`: buka koneksi,
+  lempar exception bila gagal. URL/USER/PASS dibaca saat dipanggil dari system
+  property `db.url`, `db.user`, `db.pass`; default tetap nilai sekarang.
+- `getConnection()` lama tetap ada dengan perilaku sama (`return null` bila
+  gagal), tapi isinya mendelegasikan ke `open()`. Alasan: stack lama masih
+  entry point dan banyak memakai `private Connection con = koneksi.getConnection()`
+  di field initializer; mengubah perilakunya berisiko merusak aplikasi yang
+  sedang dipakai. `getConnection()` dihapus di sub-proyek 4.
+- Semua DAO `modern_pos` memakai `try (Connection con = koneksi.open())`.
 - Pengecekan `if (con == null)` di DAO dihapus.
-- Stack lama (`gui/`, `controller/`) yang mengecek `con == null` tetap
-  ter-compile; perilakunya berubah dari "diam" jadi exception dengan pesan jelas.
-  Tidak diubah lebih jauh karena akan dihapus di sub-proyek 4.
 - Teks log dengan encoding rusak (`âœ“`) diganti ASCII.
 - Test: ukur `SHOW STATUS LIKE 'Threads_connected'` sebelum dan sesudah
   50 panggilan `BarangDAO.getAllBarang("")`; selisih harus ≤ 2.
@@ -73,8 +73,9 @@ Setiap bug: tulis test gagal dulu, lalu fix (TDD).
 
 ### B3. User hilang saat navigasi
 - Kelas baru `modern_pos.utils.Session` dengan field statis `currentUser`.
-- `LoginController` men-set `Session.currentUser` setelah login sukses;
-  `logout()` men-clear-nya.
+- `LoginController` men-set `Session.currentUser` setelah login sukses.
+  Constructor `LoginView` men-clear-nya (semua jalur logout membuka
+  `LoginView`, jadi satu titik cukup).
 - Semua tombol sidebar/dashboard yang memakai `new User()` diganti
   `Session.currentUser`.
 - Test: tidak ada test otomatis (murni wiring UI); verifikasi dengan grep
@@ -98,10 +99,20 @@ Setiap bug: tulis test gagal dulu, lalu fix (TDD).
 - Test: `getAllBarang("")` mengembalikan stok sesuai data seed.
 
 ### B6. Kode transaksi bentrok
+- Kolom `kode_transaksi` di `transaksi`, `transaksi_detail`, `utang` adalah
+  `varchar(20)`, jadi kode maksimal 20 karakter.
 - Satu helper `newKodeTransaksi()` (static di `TransaksiDAO`) dipakai oleh
-  `TransaksiDAO` dan `UtangDAO`: `TRX-yyyyMMddHHmmssSSS-NNN` (NNN acak 3 digit).
-  Panjang 26 karakter; kolom `kode_transaksi` dicek di `schema.sql` muat.
-- Test: 1000 kode berturut-turut → semua unik.
+  `TransaksiDAO` dan `UtangDAO`: `TRX` + `yyMMddHHmmssSSS` + 2 digit urutan
+  = tepat 20 karakter. Generator `synchronized` menyimpan nilai terakhir
+  (`millis*100 + urutan`) dan selalu naik, jadi unik dalam satu JVM walau
+  dipanggil > 100 kali per milidetik. Antar-JVM (dua kasir) bentrok ditolak
+  UNIQUE KEY di DB (transaksi rollback, bukan data korup).
+- `jdbc` driver auto-load (JDBC 4), `Class.forName` dan `testConnection()`
+  (tidak dipakai di mana pun) dihapus.
+- Library tambahan `AbsoluteLayout.jar` (dipakai form lama) ikut ke `lib/`;
+  ketiga jar lama disalin dari `dist/lib/`. JUnit 4.13.2 + Hamcrest 1.3 disalin
+  dari salinan lokal yang sudah ada di mesin (tidak perlu download).
+- Test: 1000 kode berturut-turut → semua unik dan panjang 20.
 
 ## C. Di luar cakupan
 
@@ -116,5 +127,4 @@ Setiap bug: tulis test gagal dulu, lalu fix (TDD).
 
 - `schema.sql` dari DB lokal bisa berbeda dengan `output/sarimurnirejeki.sql`
   lama; DB lokal dianggap benar.
-- Perubahan `koneksi.getConnection()` (lempar exception) memengaruhi stack
-  lama; dimitigasi dengan pemeriksaan di B1.
+- Stack lama tidak berubah perilaku: `getConnection()` dipertahankan (B1).
