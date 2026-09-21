@@ -58,7 +58,12 @@ public class UtangDAO {
                     ps.executeUpdate();
                 }
 
-                // 2. Utang, terhubung ke barang yang dipilih dan transaksi di atas
+                // 2. Barang dibawa pulang pelanggan: stok berkurang. Harus SEBELUM insert utang:
+                //    cek FK utang->barang mengambil shared lock, lalu FOR UPDATE di ubahStok
+                //    membuat dua kasir bersamaan saling deadlock.
+                StokDAO.ubahStok(con, u.getKodeBarang(), -u.getQty(), "KELUAR", kodeTrx, "Utang " + u.getKodeUtang());
+
+                // 3. Utang, terhubung ke barang yang dipilih dan transaksi di atas
                 String sql = "INSERT INTO utang (kode_utang, nama, alamat, telepon, harga_brng, dp, jumlah_cicilan, jatuh_tempo, status, kode_barang, qty, kode_transaksi) VALUES (?,?,?,?,?,?,?,?,'belum',?,?,?)";
                 try (PreparedStatement ps = con.prepareStatement(sql)) {
                     ps.setString(1, u.getKodeUtang());
@@ -74,9 +79,6 @@ public class UtangDAO {
                     ps.setString(11, kodeTrx);
                     ps.executeUpdate();
                 }
-
-                // 3. Barang dibawa pulang pelanggan: stok berkurang
-                StokDAO.ubahStok(con, u.getKodeBarang(), -u.getQty(), "KELUAR", kodeTrx, "Utang " + u.getKodeUtang());
 
                 // 4. Log
                 String sqlLog = "INSERT INTO log_transaksi (kode_transaksi, tanggal, nama_pelanggan, total, bayar, kembali, tipe_transaksi, keterangan) VALUES (?, NOW(), ?, ?, ?, 0, 'KREDIT', 'Utang Baru (DP)')";
@@ -112,6 +114,16 @@ public class UtangDAO {
                     }
                 }
 
+                // Edit = koreksi atas barang yang dibawa pelanggan, apa pun status utangnya.
+                // Stok dikunci SEBELUM UPDATE utang (cek FK ke barang baru ambil shared lock -> deadlock).
+                if (barangLama.equals(u.getKodeBarang())) {
+                    int kembali = qtyLama - u.getQty();
+                    StokDAO.ubahStok(con, barangLama, kembali, kembali > 0 ? "MASUK" : "KELUAR", null, ket);
+                } else {
+                    StokDAO.ubahStok(con, barangLama, qtyLama, "MASUK", null, ket);
+                    StokDAO.ubahStok(con, u.getKodeBarang(), -u.getQty(), "KELUAR", null, ket);
+                }
+
                 String sql = "UPDATE utang SET nama=?, alamat=?, telepon=?, harga_brng=?, dp=?, jumlah_cicilan=?, jatuh_tempo=?, kode_barang=?, qty=? WHERE kode_utang=?";
                 try (PreparedStatement ps = con.prepareStatement(sql)) {
                     ps.setString(1, u.getNama());
@@ -125,15 +137,6 @@ public class UtangDAO {
                     ps.setInt(9, u.getQty());
                     ps.setString(10, u.getKodeUtang());
                     ps.executeUpdate();
-                }
-
-                // Edit = koreksi atas barang yang dibawa pelanggan, apa pun status utangnya.
-                if (barangLama.equals(u.getKodeBarang())) {
-                    int kembali = qtyLama - u.getQty();
-                    StokDAO.ubahStok(con, barangLama, kembali, kembali > 0 ? "MASUK" : "KELUAR", null, ket);
-                } else {
-                    StokDAO.ubahStok(con, barangLama, qtyLama, "MASUK", null, ket);
-                    StokDAO.ubahStok(con, u.getKodeBarang(), -u.getQty(), "KELUAR", null, ket);
                 }
 
                 con.commit();

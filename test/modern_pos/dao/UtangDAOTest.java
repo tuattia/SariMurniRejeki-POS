@@ -49,6 +49,30 @@ public class UtangDAOTest {
         assertEquals(0, TestDb.queryInt("SELECT COUNT(*) FROM log_transaksi"));
     }
 
+    @Test
+    public void duaKasirBersamaanTidakDeadlock() throws Exception {
+        // 8 utang untuk barang yang sama, dilepas bersamaan; stok 10 cukup untuk semuanya.
+        final int n = 8;
+        final java.util.concurrent.CyclicBarrier start = new java.util.concurrent.CyclicBarrier(n);
+        final java.util.List<Throwable> gagal = java.util.Collections.synchronizedList(new java.util.ArrayList<Throwable>());
+        Thread[] ts = new Thread[n];
+        for (int i = 0; i < n; i++) {
+            final String kode = "UTG-" + i;
+            ts[i] = new Thread(() -> {
+                try {
+                    start.await();
+                    dao.tambahUtang(utang(kode, "B001", 65000, 0, 1));
+                } catch (Throwable t) {
+                    gagal.add(t);
+                }
+            });
+            ts[i].start();
+        }
+        for (Thread t : ts) t.join();
+        assertTrue("gagal: " + gagal, gagal.isEmpty());
+        assertEquals(2, stok("B001"));
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void qtyNolDitolak() throws Exception {
         dao.tambahUtang(utang("UTG-1", "B001", 65000, 0, 0));
