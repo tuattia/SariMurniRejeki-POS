@@ -69,8 +69,7 @@ public class TransaksiDAO {
 
                 con.commit();
             } catch (SQLException e) {
-                con.rollback();
-                throw e;
+                throw Tx.rollbackQuietly(con, e);
             }
         }
     }

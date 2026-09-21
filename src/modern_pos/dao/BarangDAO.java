@@ -17,8 +17,8 @@ public class BarangDAO {
                 + "ORDER BY kode_barang ASC";
         try (Connection con = koneksi.open(); PreparedStatement ps = con.prepareStatement(sql)) {
             if (isSearch) {
-                ps.setString(1, "%" + keyword + "%");
-                ps.setString(2, "%" + keyword + "%");
+                ps.setString(1, "%" + keyword.trim() + "%");
+                ps.setString(2, "%" + keyword.trim() + "%");
             }
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {

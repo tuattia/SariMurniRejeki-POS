@@ -123,6 +123,7 @@ public class TransaksiController {
                     view.resetForm();
                 } catch (Exception ex) {
                     view.showError("Gagal menyimpan: " + ex.getMessage());
+                    loadBarang(""); // stok di layar mungkin basi
                 }
             }
         };

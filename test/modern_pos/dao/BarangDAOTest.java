@@ -33,6 +33,11 @@ public class BarangDAOTest {
     }
 
     @Test
+    public void keywordDenganSpasiDiTrim() throws Exception {
+        assertEquals(1, dao.getAllBarang(" Gula ").size());
+    }
+
+    @Test
     public void keywordKosongAtauSpasiMengembalikanSemua() throws Exception {
         assertEquals(2, dao.getAllBarang("").size());
         assertEquals(2, dao.getAllBarang("   ").size());

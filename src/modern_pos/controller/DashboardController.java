@@ -22,7 +22,7 @@ public class DashboardController {
 
     public void setView(DashboardView view) {
         this.view = view;
-        view.setUserInfo(currentUser.getNama());
+        view.setUserInfo(currentUser != null ? currentUser.getNama() : "-");
         loadData("");
     }
 

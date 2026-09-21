@@ -11,5 +11,5 @@ $root = (Resolve-Path test).Path
 $tests = Get-ChildItem -Recurse test -Filter *Test.java | ForEach-Object {
     $_.FullName.Substring($root.Length + 1).Replace('.java', '').Replace('\', '.')
 }
-& java -cp "$out;lib/*" org.junit.runner.JUnitCore $tests
+& java "-Ddb.url=jdbc:mysql://localhost:3306/sarimurnirejeki_test" -cp "$out;lib/*" org.junit.runner.JUnitCore $tests
 exit $LASTEXITCODE
