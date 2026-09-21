@@ -35,24 +35,43 @@ public class BarangDAO {
     }
 
     public void tambahBarang(Barang b) throws SQLException {
-        String sql = "INSERT INTO barang (kode_barang, nama_barang, harga_jual, stok) VALUES (?, ?, ?, ?)";
-        try (Connection con = koneksi.open(); PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, b.getKodeBarang());
-            ps.setString(2, b.getNamaBarang());
-            ps.setInt(3, b.getHarga());
-            ps.setInt(4, b.getStok());
-            ps.executeUpdate();
+        if (b.getStok() < 0) throw new IllegalArgumentException("Stok tidak boleh negatif");
+        String sql = "INSERT INTO barang (kode_barang, nama_barang, harga_jual, stok) VALUES (?, ?, ?, 0)";
+        try (Connection con = koneksi.open()) {
+            con.setAutoCommit(false);
+            try {
+                try (PreparedStatement ps = con.prepareStatement(sql)) {
+                    ps.setString(1, b.getKodeBarang());
+                    ps.setString(2, b.getNamaBarang());
+                    ps.setInt(3, b.getHarga());
+                    ps.executeUpdate();
+                }
+                StokDAO.ubahStok(con, b.getKodeBarang(), b.getStok(), "MASUK", null, "Stok awal");
+                con.commit();
+            } catch (SQLException e) {
+                throw Tx.rollbackQuietly(con, e);
+            }
         }
     }
 
-    public void updateBarang(Barang b) throws SQLException {
-        String sql = "UPDATE barang SET nama_barang=?, harga_jual=?, stok=? WHERE kode_barang=?";
-        try (Connection con = koneksi.open(); PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, b.getNamaBarang());
-            ps.setInt(2, b.getHarga());
-            ps.setInt(3, b.getStok());
-            ps.setString(4, b.getKodeBarang());
-            ps.executeUpdate();
+    // stokSebelumEdit = stok yang tampil saat form dibuka. Yang diterapkan hanya selisihnya,
+    // jadi penjualan yang terjadi selama form terbuka tidak tertimpa.
+    public void updateBarang(Barang b, int stokSebelumEdit) throws SQLException {
+        String sql = "UPDATE barang SET nama_barang=?, harga_jual=? WHERE kode_barang=?";
+        try (Connection con = koneksi.open()) {
+            con.setAutoCommit(false);
+            try {
+                try (PreparedStatement ps = con.prepareStatement(sql)) {
+                    ps.setString(1, b.getNamaBarang());
+                    ps.setInt(2, b.getHarga());
+                    ps.setString(3, b.getKodeBarang());
+                    ps.executeUpdate();
+                }
+                StokDAO.ubahStok(con, b.getKodeBarang(), b.getStok() - stokSebelumEdit, "KOREKSI", null, "Koreksi manual");
+                con.commit();
+            } catch (SQLException e) {
+                throw Tx.rollbackQuietly(con, e);
+            }
         }
     }
 

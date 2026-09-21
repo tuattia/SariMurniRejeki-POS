@@ -197,7 +197,7 @@ public class StockView extends JFrame {
         panel.add(SwingHelper.createLabel("Kode Barang:", UITheme.FONT_BODY, UITheme.COLOR_TEXT_PRIMARY)); panel.add(txtKode);
         panel.add(SwingHelper.createLabel("Nama Barang:", UITheme.FONT_BODY, UITheme.COLOR_TEXT_PRIMARY)); panel.add(txtNama);
         panel.add(SwingHelper.createLabel("Harga Jual:", UITheme.FONT_BODY, UITheme.COLOR_TEXT_PRIMARY)); panel.add(txtHarga);
-        panel.add(SwingHelper.createLabel("Stok Awal:", UITheme.FONT_BODY, UITheme.COLOR_TEXT_PRIMARY)); panel.add(txtStok);
+        panel.add(SwingHelper.createLabel(isEdit ? "Stok:" : "Stok Awal:",UITheme.FONT_BODY, UITheme.COLOR_TEXT_PRIMARY)); panel.add(txtStok);
 
         int result = JOptionPane.showConfirmDialog(this, panel, isEdit ? "Edit Barang" : "Tambah Barang Baru", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
         
@@ -208,7 +208,7 @@ public class StockView extends JFrame {
                 newB.setNamaBarang(txtNama.getText());
                 newB.setHarga(Integer.parseInt(txtHarga.getText()));
                 newB.setStok(Integer.parseInt(txtStok.getText()));
-                controller.simpanBarang(newB, isEdit);
+                controller.simpanBarang(newB, b);
             } catch (Exception ex) {
                 showError("Input harga dan stok harus berupa angka!");
             }

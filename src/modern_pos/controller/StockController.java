@@ -36,11 +36,12 @@ public class StockController {
         worker.execute();
     }
 
-    public void simpanBarang(Barang b, boolean isEdit) {
+    // lama == null berarti tambah barang baru.
+    public void simpanBarang(final Barang baru, final Barang lama) {
         SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
             @Override protected Void doInBackground() throws Exception {
-                if (isEdit) dao.updateBarang(b);
-                else dao.tambahBarang(b);
+                if (lama != null) dao.updateBarang(baru, lama.getStok());
+                else dao.tambahBarang(baru);
                 return null;
             }
             @Override protected void done() {
@@ -49,7 +50,9 @@ public class StockController {
                     view.showSuccess("Data barang berhasil disimpan!");
                     loadData("");
                 } catch (Exception ex) {
-                    view.showError("Gagal menyimpan: " + ex.getMessage());
+                    Throwable c = ex.getCause() != null ? ex.getCause() : ex;
+                    view.showError("Gagal menyimpan: " + c.getMessage());
+                    loadData("");
                 }
             }
         };
