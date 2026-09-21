@@ -62,6 +62,15 @@ public class UtangDAOTest {
     }
 
     @Test
+    public void lunasDuaKaliTidakMencatatPemasukanDobel() throws Exception {
+        dao.tambahUtang(utang("UTG-1", "B002", 15000, 5000));
+        dao.tandaiLunas("UTG-1");
+        dao.tandaiLunas("UTG-1"); // klik ganda / daftar di layar sudah basi
+        assertEquals(1, TestDb.queryInt("SELECT COUNT(*) FROM transaksi WHERE jenis_transaksi='TUNAI'"));
+        assertEquals(1, TestDb.queryInt("SELECT COUNT(*) FROM log_transaksi WHERE tipe_transaksi='TUNAI'"));
+    }
+
+    @Test
     public void lunasDenganSisaMencatatPemasukanTunai() throws Exception {
         dao.tambahUtang(utang("UTG-1", "B002", 15000, 5000));
         dao.tandaiLunas("UTG-1");

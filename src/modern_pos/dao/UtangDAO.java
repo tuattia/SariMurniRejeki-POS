@@ -131,10 +131,13 @@ public class UtangDAO {
                     }
                 }
 
-                // 2. Status LUNAS
-                try (PreparedStatement ps = con.prepareStatement("UPDATE utang SET status = 'lunas' WHERE kode_utang = ?")) {
+                // 2. Status LUNAS; hanya dari 'belum' supaya klik ganda tidak mencatat pemasukan dua kali
+                try (PreparedStatement ps = con.prepareStatement("UPDATE utang SET status = 'lunas' WHERE kode_utang = ? AND status = 'belum'")) {
                     ps.setString(1, kode);
-                    ps.executeUpdate();
+                    if (ps.executeUpdate() == 0) {
+                        con.rollback();
+                        return;
+                    }
                 }
 
                 // 3. Catat pemasukan sisa sebagai TUNAI
