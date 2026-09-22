@@ -25,6 +25,9 @@ public class StrukDialog extends JDialog {
         area.setEditable(false);
         area.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
         area.setMargin(new Insets(10, 10, 10, 10));
+        // Batasi tinggi supaya tombol Cetak tetap terlihat di layar 768px; sisanya discroll.
+        area.setRows(Math.min(baris.size(), 30));
+        area.setColumns(StrukFormatter.LEBAR + 2);
 
         JButton btnCetak = new JButton("Cetak");
         JButton btnTutup = new JButton("Tutup");

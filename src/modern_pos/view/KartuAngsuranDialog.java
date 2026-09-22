@@ -15,6 +15,7 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.SwingConstants;
 import javax.swing.table.DefaultTableModel;
@@ -96,7 +97,10 @@ public class KartuAngsuranDialog extends JDialog {
         tombol.add(btnTutup);
 
         setLayout(new BorderLayout());
-        add(kartu, BorderLayout.CENTER);
+        // Panel tetap 567x756 untuk dicetak; di layar dibungkus scroll supaya tombol muat di layar 768px.
+        JScrollPane gulir = new JScrollPane(kartu);
+        gulir.setPreferredSize(new Dimension(567 + 24, 560));
+        add(gulir, BorderLayout.CENTER);
         add(tombol, BorderLayout.SOUTH);
         pack();
         setLocationRelativeTo(parent);
