@@ -269,10 +269,4 @@ public class TransaksiView extends JFrame {
     public void showStruk(modern_pos.model.Struk struk) { new StrukDialog(this, struk).setVisible(true); }
     public void showError(String msg) { JOptionPane.showMessageDialog(this, "<html><body style='width: 350px; font-family: Segoe UI, sans-serif;'>" + msg.replace("\n", "<br>") + "</body></html>", "Error", JOptionPane.ERROR_MESSAGE); }
     public void showSuccess(String msg) { JOptionPane.showMessageDialog(this, msg, "Sukses", JOptionPane.INFORMATION_MESSAGE); }
-
-    public static void main(String[] args) {
-        java.awt.EventQueue.invokeLater(() -> {
-            new TransaksiView(new TransaksiController()).setVisible(true);
-        });
-    }
 }
