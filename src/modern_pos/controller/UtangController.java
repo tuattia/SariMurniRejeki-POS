@@ -5,6 +5,7 @@ import modern_pos.dao.BarangDAO;
 import modern_pos.model.Barang;
 import javax.swing.SwingWorker;
 import modern_pos.dao.UtangDAO;
+import modern_pos.model.KartuAngsuran;
 import modern_pos.model.Utang;
 import modern_pos.view.UtangView;
 
@@ -18,6 +19,24 @@ public class UtangController {
         loadData("");
     }
 
+    private static String pesan(Exception ex) {
+        Throwable c = ex.getCause() != null ? ex.getCause() : ex;
+        return c.getMessage();
+    }
+
+    public void tampilKartu(final String kode) {
+        SwingWorker<KartuAngsuran, Void> worker = new SwingWorker<KartuAngsuran, Void>() {
+            @Override protected KartuAngsuran doInBackground() throws Exception {
+                return dao.getKartu(kode);
+            }
+            @Override protected void done() {
+                try { view.showKartu(get()); }
+                catch (Exception ex) { view.showError("Gagal memuat kartu: " + pesan(ex)); }
+            }
+        };
+        worker.execute();
+    }
+
     public void loadData(final String keyword) {
         view.setLoading(true);
         SwingWorker<List<Utang>, Void> worker = new SwingWorker<List<Utang>, Void>() {
@@ -27,7 +46,7 @@ public class UtangController {
             @Override protected void done() {
                 view.setLoading(false);
                 try { view.populateTable(get()); } 
-                catch (Exception ex) { view.showError("Gagal memuat utang: " + ex.getMessage()); }
+                catch (Exception ex) { view.showError("Gagal memuat utang: " + pesan(ex)); }
             }
         };
         worker.execute();
@@ -49,7 +68,7 @@ public class UtangController {
                     get();
                     view.showSuccess("Data utang berhasil disimpan!");
                     loadData("");
-                } catch (Exception ex) { view.showError("Gagal menyimpan: " + ex.getMessage()); }
+                } catch (Exception ex) { view.showError("Gagal menyimpan: " + pesan(ex)); }
             }
         };
         worker.execute();
@@ -63,7 +82,7 @@ public class UtangController {
             @Override protected void done() {
                 try {
                     get(); view.showSuccess("Data berhasil dihapus!"); loadData("");
-                } catch (Exception ex) { view.showError("Gagal menghapus: " + ex.getMessage()); }
+                } catch (Exception ex) { view.showError("Gagal menghapus: " + pesan(ex)); }
             }
         };
         worker.execute();
@@ -77,7 +96,7 @@ public class UtangController {
             @Override protected void done() {
                 try {
                     get(); view.showSuccess("Utang berhasil ditandai LUNAS!"); loadData("");
-                } catch (Exception ex) { view.showError("Gagal update status: " + ex.getMessage()); }
+                } catch (Exception ex) { view.showError("Gagal update status: " + pesan(ex)); }
             }
         };
         worker.execute();

@@ -103,9 +103,11 @@ public class UtangView extends JFrame {
         JButton btnEdit = SwingHelper.createFlatButton("Edit", UITheme.COLOR_WARNING, new Color(230, 81, 0));
         JButton btnHapus = SwingHelper.createFlatButton("Hapus", UITheme.COLOR_DANGER, new Color(198, 40, 40));
         JButton btnLunas = SwingHelper.createFlatButton("Tandai Lunas", UITheme.COLOR_SUCCESS, new Color(56, 142, 60));
+        JButton btnKartu = SwingHelper.createFlatButton("Kartu", new Color(96, 125, 139), new Color(69, 90, 100));
 
         btnLunas.setPreferredSize(new Dimension(140, 35));
         
+        actionPanel.add(btnKartu);
         actionPanel.add(btnLunas);
         actionPanel.add(btnHapus);
         actionPanel.add(btnEdit);
@@ -171,7 +173,15 @@ public class UtangView extends JFrame {
             int confirm = JOptionPane.showConfirmDialog(this, "Tandai utang " + u.getNama() + " sebagai LUNAS?", "Pelunasan", JOptionPane.YES_NO_OPTION);
             if (confirm == JOptionPane.YES_OPTION) controller.tandaiLunas(u.getKodeUtang());
         });
+
+        btnKartu.addActionListener(e -> {
+            int row = tblUtang.getSelectedRow();
+            if (row == -1) { showError("Pilih utang yang ingin dilihat kartunya!"); return; }
+            controller.tampilKartu(currentList.get(row).getKodeUtang());
+        });
     }
+
+    public void showKartu(modern_pos.model.KartuAngsuran k) { new KartuAngsuranDialog(this, k).setVisible(true); }
 
     private void showFormDialog(Utang u) {
         boolean isEdit = (u != null);
