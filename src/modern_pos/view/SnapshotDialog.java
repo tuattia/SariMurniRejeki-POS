@@ -26,7 +26,6 @@ import javax.swing.table.DefaultTableModel;
 import modern_pos.dao.SnapshotDAO;
 import modern_pos.model.StockSnapshot;
 
-// Port gui.snapshotDialog ke SnapshotDAO.
 // ponytail: query DB sinkron di EDT; tabel barang kecil. Pindah ke SwingWorker bila terasa lambat.
 public class SnapshotDialog extends JDialog {
 

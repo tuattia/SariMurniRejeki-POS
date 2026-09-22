@@ -1,5 +1,7 @@
 package modern_pos.dao;
 
+import static modern_pos.TestDb.barang;
+
 import java.util.List;
 import modern_pos.TestDb;
 import modern_pos.model.Barang;
@@ -32,14 +34,6 @@ public class BarangDAOTest {
         assertEquals(15000, hasil.get(0).getHarga());
     }
 
-    private static Barang barang(String kode, String nama, int harga, int stok) {
-        Barang b = new Barang();
-        b.setKodeBarang(kode);
-        b.setNamaBarang(nama);
-        b.setHarga(harga);
-        b.setStok(stok);
-        return b;
-    }
 
     @Test
     public void tambahBarangStokAwalMencatatMasuk() throws Exception {

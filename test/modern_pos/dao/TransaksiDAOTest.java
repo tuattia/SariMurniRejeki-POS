@@ -1,25 +1,18 @@
 package modern_pos.dao;
 
+import static modern_pos.TestDb.barang;
+
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import modern_pos.TestDb;
-import modern_pos.model.Barang;
 import modern_pos.model.CartItem;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
 public class TransaksiDAOTest {
 
-    private static Barang barang(String kode, String nama, int harga, int stokDiLayar) {
-        Barang b = new Barang();
-        b.setKodeBarang(kode);
-        b.setNamaBarang(nama);
-        b.setHarga(harga);
-        b.setStok(stokDiLayar);
-        return b;
-    }
 
     @Test
     public void checkoutSuksesMengurangiStokDanMencatatSemuaTabel() throws Exception {

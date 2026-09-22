@@ -1,12 +1,12 @@
 package modern_pos.dao;
 
-import java.time.LocalDate;
+import static modern_pos.TestDb.utang;
+
 import java.util.Arrays;
 import modern_pos.TestDb;
 import modern_pos.model.Barang;
 import modern_pos.model.CartItem;
 import modern_pos.model.DashboardSummary;
-import modern_pos.model.Utang;
 import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -18,19 +18,6 @@ public class DashboardDAOTest {
         TestDb.reset();
     }
 
-    private static Utang utang(String kode, String kodeBarang, int harga, int dp) {
-        Utang u = new Utang();
-        u.setKodeUtang(kode);
-        u.setNama("Siti");
-        u.setAlamat("-");
-        u.setTelepon("0812");
-        u.setHargaBarang(harga);
-        u.setDp(dp);
-        u.setJumlahCicilan(3);
-        u.setJatuhTempo(LocalDate.of(2026, 12, 1));
-        u.setKodeBarang(kodeBarang);
-        return u;
-    }
 
     private static void jualTunai(int total) throws Exception {
         Barang b = new Barang();

@@ -1,9 +1,9 @@
 package modern_pos.dao;
 
+import static modern_pos.TestDb.utang;
+
 import java.sql.SQLException;
-import java.time.LocalDate;
 import modern_pos.TestDb;
-import modern_pos.model.Utang;
 import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -16,9 +16,6 @@ public class UtangDAOTest {
         TestDb.reset();
     }
 
-    private static Utang utang(String kode, String kodeBarang, int harga, int dp) {
-        return utang(kode, kodeBarang, harga, dp, 1);
-    }
 
     private static int stok(String kode) throws Exception {
         return TestDb.queryInt("SELECT stok FROM barang WHERE kode_barang=?", kode);
@@ -147,20 +144,6 @@ public class UtangDAOTest {
         assertEquals(8, stok("B001"));
     }
 
-    private static Utang utang(String kode, String kodeBarang, int harga, int dp, int qty) {
-        Utang u = new Utang();
-        u.setKodeUtang(kode);
-        u.setNama("Siti");
-        u.setAlamat("-");
-        u.setTelepon("0812");
-        u.setHargaBarang(harga);
-        u.setDp(dp);
-        u.setJumlahCicilan(3);
-        u.setJatuhTempo(LocalDate.of(2026, 12, 1));
-        u.setKodeBarang(kodeBarang);
-        u.setQty(qty);
-        return u;
-    }
 
     @Test
     public void tambahUtangMenyimpanBarangYangDipilihDanKodeTransaksi() throws Exception {

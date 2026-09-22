@@ -28,6 +28,35 @@ public class TestDb {
         }
     }
 
+    // Data uji bersama untuk test DAO.
+    public static modern_pos.model.Barang barang(String kode, String nama, int harga, int stok) {
+        modern_pos.model.Barang b = new modern_pos.model.Barang();
+        b.setKodeBarang(kode);
+        b.setNamaBarang(nama);
+        b.setHarga(harga);
+        b.setStok(stok);
+        return b;
+    }
+
+    public static modern_pos.model.Utang utang(String kode, String kodeBarang, int harga, int dp) {
+        return utang(kode, kodeBarang, harga, dp, 1);
+    }
+
+    public static modern_pos.model.Utang utang(String kode, String kodeBarang, int harga, int dp, int qty) {
+        modern_pos.model.Utang u = new modern_pos.model.Utang();
+        u.setKodeUtang(kode);
+        u.setNama("Siti");
+        u.setAlamat("-");
+        u.setTelepon("0812");
+        u.setHargaBarang(harga);
+        u.setDp(dp);
+        u.setJumlahCicilan(3);
+        u.setJatuhTempo(java.time.LocalDate.of(2026, 12, 1));
+        u.setKodeBarang(kodeBarang);
+        u.setQty(qty);
+        return u;
+    }
+
     public static int queryInt(String sql, Object... params) throws SQLException {
         String v = queryString(sql, params);
         return v == null ? 0 : Integer.parseInt(v);
