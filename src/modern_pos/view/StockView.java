@@ -117,6 +117,12 @@ public class StockView extends JFrame {
         actionPanel.add(btnHapus);
         actionPanel.add(btnEdit);
         actionPanel.add(btnTambah);
+        // Member: operasional saja (restock, riwayat).
+        boolean admin = modern_pos.utils.Akses.admin();
+        btnTambah.setVisible(admin);
+        btnEdit.setVisible(admin);
+        btnHapus.setVisible(admin);
+        btnSnapshot.setVisible(admin);
         topPanel.add(actionPanel, BorderLayout.EAST);
         
         mainContent.add(topPanel, BorderLayout.NORTH);

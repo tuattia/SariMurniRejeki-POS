@@ -112,6 +112,10 @@ public class UtangView extends JFrame {
         actionPanel.add(btnHapus);
         actionPanel.add(btnEdit);
         actionPanel.add(btnTambah);
+        // Member: tambah, lunas, kartu saja.
+        boolean admin = modern_pos.utils.Akses.admin();
+        btnEdit.setVisible(admin);
+        btnHapus.setVisible(admin);
         topPanel.add(actionPanel, BorderLayout.EAST);
         
         mainContent.add(topPanel, BorderLayout.NORTH);

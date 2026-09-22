@@ -102,6 +102,7 @@ public class LogTransaksiView extends JFrame {
         
         actionPanel.add(btnCetak);
         actionPanel.add(btnHapus);
+        btnHapus.setVisible(modern_pos.utils.Akses.admin()); // member hanya boleh cetak
         topPanel.add(actionPanel, BorderLayout.EAST);
         
         mainContent.add(topPanel, BorderLayout.NORTH);
