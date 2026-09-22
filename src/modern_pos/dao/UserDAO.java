@@ -1,6 +1,6 @@
 package modern_pos.dao;
 import config.koneksi;
-import login.enkripsi;
+import modern_pos.utils.Hash;
 import modern_pos.model.User;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -13,7 +13,7 @@ import modern_pos.utils.Akses;
 
 public class UserDAO {
     public User authenticate(String username, String passwordPlain) throws SQLException {
-        String passwordHash = enkripsi.sha256(passwordPlain);
+        String passwordHash = Hash.sha256(passwordPlain);
         String sql = "SELECT id_user, nama, username, hakakses FROM user WHERE username = ? AND password = ?";
         try (Connection con = koneksi.open(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, username);
@@ -64,7 +64,7 @@ public class UserDAO {
                 try (PreparedStatement ps = con.prepareStatement("INSERT INTO user (nama, username, password, hakakses) VALUES (?, ?, ?, ?)")) {
                     ps.setString(1, n);
                     ps.setString(2, u);
-                    ps.setString(3, enkripsi.sha256(password));
+                    ps.setString(3, Hash.sha256(password));
                     ps.setString(4, r);
                     ps.executeUpdate();
                 }
@@ -108,7 +108,7 @@ public class UserDAO {
         cekPassword(passwordBaru);
         try (Connection con = koneksi.open();
              PreparedStatement ps = con.prepareStatement("UPDATE user SET password = ? WHERE id_user = ?")) {
-            ps.setString(1, enkripsi.sha256(passwordBaru));
+            ps.setString(1, Hash.sha256(passwordBaru));
             ps.setInt(2, id);
             if (ps.executeUpdate() == 0) throw new SQLException("User tidak ditemukan");
         }
