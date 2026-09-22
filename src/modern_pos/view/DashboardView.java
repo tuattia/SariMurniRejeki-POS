@@ -53,45 +53,10 @@ public class DashboardView extends JFrame {
         setLayout(new BorderLayout());
 
         // --- SIDEBAR --- (Diperkecil jadi 200px)
-        JPanel sidebar = new JPanel();
-        sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
-        sidebar.setBackground(UITheme.COLOR_PRIMARY_DARK);
-        sidebar.setPreferredSize(new Dimension(200, getHeight()));
-
-        JLabel lblBrand = SwingHelper.createLabel(" SARI MURNI", UITheme.FONT_TITLE, Color.WHITE);
-        lblBrand.setBorder(BorderFactory.createEmptyBorder(20, 10, 20, 10));
-                sidebar.add(lblBrand);
-        
-        // Garis Pembatas (Separator)
-        javax.swing.JSeparator sep = new javax.swing.JSeparator();
-        sep.setMaximumSize(new Dimension(170, 1));
-        sep.setForeground(new Color(255, 255, 255, 40));
-        sep.setBackground(new Color(255, 255, 255, 40));
-        sidebar.add(sep);
-        sidebar.add(Box.createRigidArea(new Dimension(0, 15)));
-
-        JButton btnDash = SwingHelper.createSidebarButton("Dashboard");
-        JButton btnTrans = SwingHelper.createSidebarButton("Transaksi");
-        btnTrans.addActionListener(e -> { this.dispose(); new modern_pos.view.TransaksiView(new modern_pos.controller.TransaksiController()).setVisible(true); });
-        JButton btnStock = SwingHelper.createSidebarButton("Stock"); btnStock.addActionListener(e -> { this.dispose(); new modern_pos.view.StockView(new modern_pos.controller.StockController()).setVisible(true); });
-        JButton btnUtang = SwingHelper.createSidebarButton("Utang / Piutang"); btnUtang.addActionListener(e -> { this.dispose(); new modern_pos.view.UtangView(new modern_pos.controller.UtangController()).setVisible(true); });
-        JButton btnLog = SwingHelper.createSidebarButton("Log Transaksi"); btnLog.addActionListener(e -> { this.dispose(); new modern_pos.view.LogTransaksiView(new modern_pos.controller.LogTransaksiController()).setVisible(true); });
-        JButton btnLogout = SwingHelper.createSidebarButton("Logout");
         JButton btnUser = SwingHelper.createSidebarButton("Kelola User");
         btnUser.addActionListener(e -> new UserDialog(this, new modern_pos.controller.UserController()).setVisible(true));
         btnUser.setVisible(modern_pos.utils.Akses.admin());
-
-        btnDash.setBackground(UITheme.COLOR_PRIMARY); btnDash.setForeground(Color.WHITE); btnDash.putClientProperty("active_menu", true); 
-
-        sidebar.add(btnDash);
-        sidebar.add(btnTrans);
-        sidebar.add(btnStock);
-        sidebar.add(btnUtang);
-        sidebar.add(btnLog);
-        sidebar.add(btnUser);
-        sidebar.add(Box.createVerticalGlue()); 
-        sidebar.add(btnLogout);
-        add(sidebar, BorderLayout.WEST);
+        add(Sidebar.buat(this, Sidebar.DASHBOARD, controller::logout, btnUser), BorderLayout.WEST);
 
         // --- HEADER --- (Tinggi diperkecil jadi 50px)
         JPanel topBar = new JPanel(new BorderLayout());
@@ -172,7 +137,6 @@ public class DashboardView extends JFrame {
         add(rightWrapper, BorderLayout.CENTER);
 
         // --- EVENTS ---
-        btnLogout.addActionListener(e -> controller.logout());
         txtSearch.addKeyListener(new KeyAdapter() {
             @Override
             public void keyReleased(KeyEvent e) {

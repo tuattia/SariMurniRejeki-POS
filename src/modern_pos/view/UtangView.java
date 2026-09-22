@@ -46,43 +46,8 @@ public class UtangView extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
-        // --- SIDEBAR ---
-        JPanel sidebar = new JPanel();
-        sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
-        sidebar.setBackground(UITheme.COLOR_PRIMARY_DARK);
-        sidebar.setPreferredSize(new Dimension(200, getHeight()));
+        add(Sidebar.buat(this, Sidebar.UTANG, Sidebar.keLogin(this)), BorderLayout.WEST);
 
-        JLabel lblBrand = SwingHelper.createLabel(" SARI MURNI", UITheme.FONT_TITLE, Color.WHITE);
-        lblBrand.setBorder(BorderFactory.createEmptyBorder(20, 10, 20, 10));
-                sidebar.add(lblBrand);
-        
-        // Garis Pembatas (Separator)
-        javax.swing.JSeparator sep = new javax.swing.JSeparator();
-        sep.setMaximumSize(new Dimension(170, 1));
-        sep.setForeground(new Color(255, 255, 255, 40));
-        sep.setBackground(new Color(255, 255, 255, 40));
-        sidebar.add(sep);
-        sidebar.add(Box.createRigidArea(new Dimension(0, 15)));
-
-        JButton btnDash = SwingHelper.createSidebarButton("Dashboard");
-        JButton btnTrans = SwingHelper.createSidebarButton("Transaksi");
-        JButton btnStock = SwingHelper.createSidebarButton("Stock");
-        JButton btnUtang = SwingHelper.createSidebarButton("Utang / Piutang");
-        JButton btnLog = SwingHelper.createSidebarButton("Log Transaksi"); btnLog.addActionListener(e -> { this.dispose(); new modern_pos.view.LogTransaksiView(new modern_pos.controller.LogTransaksiController()).setVisible(true); });
-        JButton btnLogout = SwingHelper.createSidebarButton("Logout");
-
-        btnUtang.setBackground(UITheme.COLOR_PRIMARY); btnUtang.setForeground(Color.WHITE); btnUtang.putClientProperty("active_menu", true);
-
-        sidebar.add(btnDash); sidebar.add(btnTrans); sidebar.add(btnStock);
-        sidebar.add(btnUtang); sidebar.add(btnLog); sidebar.add(Box.createVerticalGlue()); 
-        sidebar.add(btnLogout);
-        add(sidebar, BorderLayout.WEST);
-
-        // --- NAVIGASI ---
-        btnDash.addActionListener(e -> { this.dispose(); new DashboardView(new modern_pos.controller.DashboardController(modern_pos.utils.Session.currentUser)).setVisible(true); });
-        btnTrans.addActionListener(e -> { this.dispose(); new TransaksiView(new modern_pos.controller.TransaksiController()).setVisible(true); });
-        btnStock.addActionListener(e -> { this.dispose(); new StockView(new modern_pos.controller.StockController()).setVisible(true); });
-        btnLogout.addActionListener(e -> { this.dispose(); new LoginView().setVisible(true); });
 
         // --- MAIN CONTENT ---
         JPanel mainContent = new JPanel(new BorderLayout(20, 20));
