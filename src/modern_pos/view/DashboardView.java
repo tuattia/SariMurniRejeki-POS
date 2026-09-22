@@ -77,6 +77,9 @@ public class DashboardView extends JFrame {
         JButton btnUtang = SwingHelper.createSidebarButton("Utang / Piutang"); btnUtang.addActionListener(e -> { this.dispose(); new modern_pos.view.UtangView(new modern_pos.controller.UtangController()).setVisible(true); });
         JButton btnLog = SwingHelper.createSidebarButton("Log Transaksi"); btnLog.addActionListener(e -> { this.dispose(); new modern_pos.view.LogTransaksiView(new modern_pos.controller.LogTransaksiController()).setVisible(true); });
         JButton btnLogout = SwingHelper.createSidebarButton("Logout");
+        JButton btnUser = SwingHelper.createSidebarButton("Kelola User");
+        btnUser.addActionListener(e -> new UserDialog(this, new modern_pos.controller.UserController()).setVisible(true));
+        btnUser.setVisible(modern_pos.utils.Akses.admin());
 
         btnDash.setBackground(UITheme.COLOR_PRIMARY); btnDash.setForeground(Color.WHITE); btnDash.putClientProperty("active_menu", true); 
 
@@ -85,6 +88,7 @@ public class DashboardView extends JFrame {
         sidebar.add(btnStock);
         sidebar.add(btnUtang);
         sidebar.add(btnLog);
+        sidebar.add(btnUser);
         sidebar.add(Box.createVerticalGlue()); 
         sidebar.add(btnLogout);
         add(sidebar, BorderLayout.WEST);
