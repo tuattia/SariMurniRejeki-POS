@@ -23,6 +23,13 @@ public class Utang {
     public void setJatuhTempo(LocalDate jatuhTempo) { this.jatuhTempo = jatuhTempo; }
     private int qty = 1;
 
+    // Dibulatkan ke atas supaya total angsuran tidak kurang dari sisa utang.
+    public int bayarPerBulan() {
+        int sisa = hargaBarang - dp;
+        if (jumlahCicilan <= 0 || sisa <= 0) return 0;
+        return (sisa + jumlahCicilan - 1) / jumlahCicilan;
+    }
+
     public int getQty() { return qty; }
     public void setQty(int qty) { this.qty = qty; }
     public String getKodeBarang() { return kodeBarang; }

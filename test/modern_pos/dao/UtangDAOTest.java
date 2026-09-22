@@ -50,6 +50,22 @@ public class UtangDAOTest {
     }
 
     @Test
+    public void getKartuMemuatNamaBarangDanQty() throws Exception {
+        dao.tambahUtang(utang("UTG-1", "B001", 130000, 30000, 2));
+        modern_pos.model.KartuAngsuran k = dao.getKartu("UTG-1");
+        assertEquals("Beras 5kg", k.getNamaBarang());
+        assertEquals(2, k.getUtang().getQty());
+        assertEquals("Siti", k.getUtang().getNama());
+        assertEquals(130000, k.getUtang().getHargaBarang());
+        assertNotNull(k.getUtang().getJatuhTempo());
+    }
+
+    @Test(expected = SQLException.class)
+    public void getKartuTidakAdaDitolak() throws Exception {
+        dao.getKartu("TIDAK-ADA");
+    }
+
+    @Test
     public void duaKasirBersamaanTidakDeadlock() throws Exception {
         // 8 utang untuk barang yang sama, dilepas bersamaan; stok 10 cukup untuk semuanya.
         final int n = 8;

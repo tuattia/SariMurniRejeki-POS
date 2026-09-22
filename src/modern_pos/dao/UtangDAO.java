@@ -1,5 +1,6 @@
 package modern_pos.dao;
 import config.koneksi;
+import modern_pos.model.KartuAngsuran;
 import modern_pos.model.Utang;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -23,24 +24,38 @@ public class UtangDAO {
                 ps.setString(2, "%" + keyword + "%");
             }
             try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    Utang u = new Utang();
-                    u.setKodeUtang(rs.getString("kode_utang"));
-                    u.setNama(rs.getString("nama"));
-                    u.setAlamat(rs.getString("alamat"));
-                    u.setTelepon(rs.getString("telepon"));
-                    u.setHargaBarang(rs.getInt("harga_brng"));
-                    u.setDp(rs.getInt("dp"));
-                    u.setJumlahCicilan(rs.getInt("jumlah_cicilan"));
-                    u.setStatus(rs.getString("status"));
-                    u.setKodeBarang(rs.getString("kode_barang"));
-                    u.setQty(rs.getInt("qty"));
-                    if (rs.getDate("jatuh_tempo") != null) u.setJatuhTempo(rs.getDate("jatuh_tempo").toLocalDate());
-                    list.add(u);
-                }
+                while (rs.next()) list.add(map(rs));
             }
         }
         return list;
+    }
+
+    private static Utang map(ResultSet rs) throws SQLException {
+        Utang u = new Utang();
+        u.setKodeUtang(rs.getString("kode_utang"));
+        u.setNama(rs.getString("nama"));
+        u.setAlamat(rs.getString("alamat"));
+        u.setTelepon(rs.getString("telepon"));
+        u.setHargaBarang(rs.getInt("harga_brng"));
+        u.setDp(rs.getInt("dp"));
+        u.setJumlahCicilan(rs.getInt("jumlah_cicilan"));
+        u.setStatus(rs.getString("status"));
+        u.setKodeBarang(rs.getString("kode_barang"));
+        u.setQty(rs.getInt("qty"));
+        if (rs.getDate("jatuh_tempo") != null) u.setJatuhTempo(rs.getDate("jatuh_tempo").toLocalDate());
+        return u;
+    }
+
+    public KartuAngsuran getKartu(String kodeUtang) throws SQLException {
+        String sql = "SELECT u.*, COALESCE(b.nama_barang, '-') AS nama_barang FROM utang u "
+                + "LEFT JOIN barang b ON b.kode_barang = u.kode_barang WHERE u.kode_utang = ?";
+        try (Connection con = koneksi.open(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, kodeUtang);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) throw new SQLException("Utang " + kodeUtang + " tidak ditemukan");
+                return new KartuAngsuran(map(rs), rs.getString("nama_barang"));
+            }
+        }
     }
 
     public void tambahUtang(Utang u) throws SQLException {
