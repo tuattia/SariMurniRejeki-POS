@@ -2,6 +2,8 @@ package modern_pos.controller;
 import java.util.List;
 import javax.swing.SwingWorker;
 import modern_pos.dao.LogTransaksiDAO;
+import modern_pos.dao.TransaksiDAO;
+import modern_pos.model.Struk;
 import modern_pos.model.LogTransaksi;
 import modern_pos.view.LogTransaksiView;
 
@@ -9,7 +11,26 @@ public class LogTransaksiController {
     private LogTransaksiView view;
     private final LogTransaksiDAO dao;
 
+    private final TransaksiDAO transaksiDAO = new TransaksiDAO();
+
     public LogTransaksiController() { this.dao = new LogTransaksiDAO(); }
+
+    public void tampilStruk(final String kode) {
+        SwingWorker<Struk, Void> worker = new SwingWorker<Struk, Void>() {
+            @Override protected Struk doInBackground() throws Exception {
+                return transaksiDAO.getStruk(kode);
+            }
+            @Override protected void done() {
+                try {
+                    view.showStruk(get());
+                } catch (Exception ex) {
+                    Throwable c = ex.getCause() != null ? ex.getCause() : ex;
+                    view.showError("Gagal memuat struk: " + c.getMessage());
+                }
+            }
+        };
+        worker.execute();
+    }
     public void setView(LogTransaksiView view) {
         this.view = view;
         loadData("");

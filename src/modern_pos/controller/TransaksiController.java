@@ -4,6 +4,8 @@ import java.util.List;
 import javax.swing.SwingWorker;
 import modern_pos.dao.TransaksiDAO;
 import modern_pos.dao.BarangDAO;
+import modern_pos.model.Struk;
+import java.sql.SQLException;
 import modern_pos.model.Barang;
 import modern_pos.model.CartItem;
 import modern_pos.view.TransaksiView;
@@ -98,31 +100,32 @@ public class TransaksiController {
         final int kembali = bayar - finalTotal; // Aman untuk SwingWorker
         
         view.setLoading(true);
-        SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
-            @Override protected Void doInBackground() throws Exception {
-                dao.simpanTransaksi(cart, finalTotal, bayar, kembali, pelanggan);
-                return null;
+        SwingWorker<Struk, Void> worker = new SwingWorker<Struk, Void>() {
+            private String strukGagal;
+
+            @Override protected Struk doInBackground() throws Exception {
+                String kode = dao.simpanTransaksi(cart, finalTotal, bayar, kembali, pelanggan);
+                try {
+                    return dao.getStruk(kode);
+                } catch (SQLException e) {
+                    strukGagal = e.getMessage(); // transaksi sudah tersimpan; hanya struk yang gagal
+                    return null;
+                }
             }
             @Override protected void done() {
                 view.setLoading(false);
                 try {
-                    get(); 
+                    Struk struk = get();
                     view.showSuccess("Transaksi Berhasil! Kembalian: Rp " + kembali);
-                    
-                    // --- BUKA JENDELA CETAK STRUK OTOMATIS ---
-                    try {
-                        gui.detailtransaksi dt = new gui.detailtransaksi();
-                        dt.setVisible(true);
-                    } catch (Exception ex) {
-                        System.out.println("Gagal membuka modul cetak struk: " + ex.getMessage());
-                    }
-                    
                     cart.clear();
                     updateCartView();
                     loadBarang("");
                     view.resetForm();
+                    if (struk != null) view.showStruk(struk);
+                    else view.showError("Transaksi tersimpan, tapi struk gagal dimuat: " + strukGagal);
                 } catch (Exception ex) {
-                    view.showError("Gagal menyimpan: " + ex.getMessage());
+                    Throwable c = ex.getCause() != null ? ex.getCause() : ex;
+                    view.showError("Gagal menyimpan: " + c.getMessage());
                     loadBarang(""); // stok di layar mungkin basi
                 }
             }

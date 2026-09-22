@@ -152,20 +152,15 @@ public class LogTransaksiView extends JFrame {
             int row = tblLog.getSelectedRow();
             if (row == -1) { showError("Pilih transaksi di tabel untuk dicetak struknya!"); return; }
             LogTransaksi log = currentList.get(row);
-            try {
-                // Memanggil sistem cetak (detailtransaksi) peninggalan dari project lama
-                gui.detailtransaksi dt = new gui.detailtransaksi();
-                
-                // Pada sistem lama, dt biasanya mengambil value dari textfield atau property public, 
-                // Jika error, minimal form detailtransaksi akan terbuka
-                dt.setVisible(true); 
-                
-                showSuccess("Jendela Cetak Struk ('detailtransaksi') berhasil dipanggil untuk: " + log.getKodeTransaksi());
-            } catch (Exception ex) {
-                showError("Gagal membuka modul cetak struk: " + ex.getMessage());
+            if ("KREDIT".equalsIgnoreCase(log.getTipeTransaksi())) {
+                showSuccess("Transaksi kredit: lihat kartu angsuran di menu Utang.");
+                return;
             }
+            controller.tampilStruk(log.getKodeTransaksi());
         });
     }
+
+    public void showStruk(modern_pos.model.Struk struk) { new StrukDialog(this, struk).setVisible(true); }
 
     public void populateTable(List<LogTransaksi> list) {
         this.currentList = list;
