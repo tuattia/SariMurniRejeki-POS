@@ -54,6 +54,48 @@ public class TransaksiDAOTest {
     }
 
     @Test
+    public void simpanTransaksiMengembalikanKodeDanGetStrukLengkap() throws Exception {
+        TestDb.reset();
+        CartItem beras = new CartItem(barang("B001", "Beras 5kg", 65000, 10), 2);
+        CartItem gula = new CartItem(barang("B002", "Gula 1kg", 15000, 2), 1);
+
+        String kode = new TransaksiDAO().simpanTransaksi(Arrays.asList(beras, gula), 145000, 150000, 5000, "Budi");
+
+        assertEquals(kode, TestDb.queryString("SELECT kode_transaksi FROM transaksi"));
+        modern_pos.model.Struk s = new TransaksiDAO().getStruk(kode);
+        assertEquals(kode, s.getKodeTransaksi());
+        assertEquals("Budi", s.getPelanggan());
+        assertEquals("TUNAI", s.getJenis());
+        assertEquals(2, s.getItems().size());
+        assertEquals("Beras 5kg", s.getItems().get(0).getNama());
+        assertEquals(2, s.getItems().get(0).getQty());
+        assertEquals(130000, s.getItems().get(0).getSubtotal());
+        assertEquals(145000, s.getTotal());
+        assertEquals(150000, s.getBayar());
+        assertEquals(5000, s.getKembali());
+        assertNotNull(s.getWaktu());
+    }
+
+    @Test
+    public void getStrukTanpaLogBayarSamaDenganTotal() throws Exception {
+        TestDb.reset();
+        CartItem beras = new CartItem(barang("B001", "Beras 5kg", 65000, 10), 1);
+        String kode = new TransaksiDAO().simpanTransaksi(Arrays.asList(beras), 65000, 100000, 35000, "Budi");
+        new LogTransaksiDAO().hapusLog(kode);
+
+        modern_pos.model.Struk s = new TransaksiDAO().getStruk(kode);
+        assertEquals(65000, s.getBayar());
+        assertEquals(0, s.getKembali());
+        assertEquals(1, s.getItems().size());
+    }
+
+    @Test(expected = SQLException.class)
+    public void getStrukKodeTidakAdaDitolak() throws Exception {
+        TestDb.reset();
+        new TransaksiDAO().getStruk("TRX-TIDAK-ADA");
+    }
+
+    @Test
     public void checkoutMencatatGerakanKeluarDenganKodeTransaksi() throws Exception {
         TestDb.reset();
         CartItem item = new CartItem(barang("B001", "Beras 5kg", 65000, 10), 3);
