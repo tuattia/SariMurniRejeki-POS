@@ -47,8 +47,8 @@ public class UserController {
         jalankan(() -> dao.tambahUser(nama, username, password, role), "User berhasil ditambahkan!");
     }
 
-    public void ubah(int id, String nama, String role) {
-        jalankan(() -> dao.ubahUser(id, nama, role), "User berhasil diubah!");
+    public void ubah(int id, String nama, String role, int idPelaku) {
+        jalankan(() -> dao.ubahUser(id, nama, role, idPelaku), "User berhasil diubah!");
     }
 
     public void resetPassword(int id, String password) {

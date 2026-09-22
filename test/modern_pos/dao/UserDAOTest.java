@@ -99,16 +99,26 @@ public class UserDAOTest {
     public void ubahNamaDanRole() throws Exception {
         dao.tambahUser("Admin", "admin", "rahasia1", "admin");
         dao.tambahUser("Diva", "diva", "rahasia1", "admin");
-        dao.ubahUser(id("diva"), "Diva Kasir", "member");
+        dao.ubahUser(id("diva"), "Diva Kasir", "member", id("admin"));
         User u = dao.authenticate("diva", "rahasia1");
         assertEquals("Diva Kasir", u.getNama());
         assertEquals("member", u.getHakAkses());
     }
 
     @Test
+    public void ubahRoleDiriSendiriDitolakTapiNamaBoleh() throws Exception {
+        dao.tambahUser("Admin", "admin", "rahasia1", "admin");
+        dao.tambahUser("Diva", "diva", "rahasia1", "admin");
+        harusSQL("Tidak bisa mengubah hak akses akun sendiri", r(() -> dao.ubahUser(id("diva"), "Diva", "member", id("diva"))));
+        dao.ubahUser(id("diva"), "Diva Baru", "admin", id("diva"));
+        assertEquals("Diva Baru", dao.authenticate("diva", "rahasia1").getNama());
+        assertEquals("admin", dao.authenticate("diva", "rahasia1").getHakAkses());
+    }
+
+    @Test
     public void adminTerakhirTidakBisaDiturunkan() throws Exception {
         dao.tambahUser("Admin", "admin", "rahasia1", "admin");
-        harusSQL("Minimal harus ada satu admin", r(() -> dao.ubahUser(id("admin"), "Admin", "member")));
+        harusSQL("Minimal harus ada satu admin", r(() -> dao.ubahUser(id("admin"), "Admin", "member", -1)));
         assertEquals("admin", dao.authenticate("admin", "rahasia1").getHakAkses());
     }
 
@@ -147,7 +157,7 @@ public class UserDAOTest {
     @Test
     public void userTidakAdaDitolak() throws Exception {
         dao.tambahUser("Admin", "admin", "rahasia1", "admin");
-        harusSQL("User tidak ditemukan", r(() -> dao.ubahUser(99999, "X", "member")));
+        harusSQL("User tidak ditemukan", r(() -> dao.ubahUser(99999, "X", "member", -1)));
         harusSQL("User tidak ditemukan", r(() -> dao.resetPassword(99999, "rahasia1")));
     }
 

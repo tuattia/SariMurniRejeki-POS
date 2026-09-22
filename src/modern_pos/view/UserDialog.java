@@ -50,7 +50,7 @@ public class UserDialog extends JDialog {
             User u = dipilih();
             if (u == null) return;
             int ok = JOptionPane.showConfirmDialog(this, "Hapus user " + u.getNama() + "?", "Hapus", JOptionPane.YES_NO_OPTION);
-            if (ok == JOptionPane.YES_OPTION) controller.hapus(u.getId(), Session.currentUser != null ? Session.currentUser.getId() : -1);
+            if (ok == JOptionPane.YES_OPTION) controller.hapus(u.getId(), idPelaku());
         });
         btnTutup.addActionListener(e -> dispose());
 
@@ -67,6 +67,10 @@ public class UserDialog extends JDialog {
         setSize(640, 420);
         setLocationRelativeTo(parent);
         controller.setView(this);
+    }
+
+    private static int idPelaku() {
+        return Session.currentUser != null ? Session.currentUser.getId() : -1;
     }
 
     private User dipilih() {
@@ -104,7 +108,7 @@ public class UserDialog extends JDialog {
         p.add(new JLabel("Nama:")); p.add(nama);
         p.add(new JLabel("Hak Akses:")); p.add(role);
         if (JOptionPane.showConfirmDialog(this, p, "Edit User", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
-            controller.ubah(u.getId(), nama.getText(), (String) role.getSelectedItem());
+            controller.ubah(u.getId(), nama.getText(), (String) role.getSelectedItem(), idPelaku());
         }
     }
 

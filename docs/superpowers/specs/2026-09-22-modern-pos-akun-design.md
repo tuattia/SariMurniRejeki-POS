@@ -42,7 +42,7 @@ Model `modern_pos.model.User` dipakai apa adanya (`id`, `nama`, `username`, `hak
 
 - `List<User> listUser()` — urut `nama`.
 - `void tambahUser(String nama, String username, String password, String hakAkses)`.
-- `void ubahUser(int id, String nama, String hakAkses)`.
+- `void ubahUser(int id, String nama, String hakAkses, int idPelaku)` — mengubah hak akses akun sendiri ditolak (`"Tidak bisa mengubah hak akses akun sendiri"`) supaya Session tidak basi; ubah nama sendiri boleh.
 - `void resetPassword(int id, String passwordBaru)`.
 - `void hapusUser(int id, int idPelaku)`.
 

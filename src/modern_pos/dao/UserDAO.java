@@ -77,12 +77,17 @@ public class UserDAO {
         }
     }
 
-    public void ubahUser(int id, String nama, String hakAkses) throws SQLException {
+    // idPelaku = user yang sedang login. Mengubah role diri sendiri ditolak supaya
+    // Session tidak basi (admin yang turun jadi member tetap melihat menu admin).
+    public void ubahUser(int id, String nama, String hakAkses, int idPelaku) throws SQLException {
         String n = wajib(nama, "Nama"), r = role(hakAkses);
         try (Connection con = koneksi.open()) {
             con.setAutoCommit(false);
             try {
                 boolean adminSekarang = kunciDanCekAdmin(con, id);
+                if (id == idPelaku && adminSekarang != Akses.isAdmin(r)) {
+                    throw new SQLException("Tidak bisa mengubah hak akses akun sendiri");
+                }
                 if (adminSekarang && !Akses.isAdmin(r) && jumlahAdmin(con) <= 1) {
                     throw new SQLException("Minimal harus ada satu admin");
                 }
