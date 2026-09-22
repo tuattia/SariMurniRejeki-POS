@@ -11,7 +11,10 @@ public class DashboardDAO {
         DashboardSummary summary = new DashboardSummary();
         try (Connection con = koneksi.open()) {
             // 1. Pendapatan & Trx Hari Ini
-            String sqlTrx = "SELECT SUM(total) as pendapatan, COUNT(kode_transaksi) as total_trx FROM transaksi WHERE DATE(tanggal) = CURDATE()";
+            // Uang masuk: TUNAI (penjualan + pelunasan) dihitung total, KREDIT hanya DP-nya.
+            String sqlTrx = "SELECT COALESCE(SUM(CASE WHEN t.jenis_transaksi = 'KREDIT' THEN COALESCE(u.dp, 0) ELSE t.total END), 0) AS pendapatan, "
+                    + "COUNT(*) AS total_trx FROM transaksi t LEFT JOIN utang u ON u.kode_transaksi = t.kode_transaksi "
+                    + "WHERE DATE(t.tanggal) = CURDATE()";
             try (PreparedStatement ps = con.prepareStatement(sqlTrx); ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     summary.setPendapatanHariIni(rs.getInt("pendapatan")); // jika null otomatis 0 di getInt
