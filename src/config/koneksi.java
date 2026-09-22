@@ -20,15 +20,4 @@ public class koneksi {
                 System.getProperty("db.user", DEFAULT_USER),
                 System.getProperty("db.pass", DEFAULT_PASS));
     }
-
-    // Dipakai stack lama (gui/, controller/): return null bila gagal. Hapus di sub-proyek 4.
-    public static Connection getConnection() {
-        try {
-            return open();
-        } catch (SQLException e) {
-            System.out.println("Koneksi gagal: " + e.getMessage());
-            e.printStackTrace();
-            return null;
-        }
-    }
 }

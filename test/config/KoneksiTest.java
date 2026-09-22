@@ -26,10 +26,4 @@ public class KoneksiTest {
         System.setProperty("db.url", "jdbc:mysql://localhost:3306/db_yang_tidak_ada_xyz");
         koneksi.open().close();
     }
-
-    @Test
-    public void getConnectionLamaTetapReturnNullBilaGagal() {
-        System.setProperty("db.url", "jdbc:mysql://localhost:3306/db_yang_tidak_ada_xyz");
-        assertNull(koneksi.getConnection());
-    }
 }
