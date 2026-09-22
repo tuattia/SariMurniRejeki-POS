@@ -18,8 +18,9 @@ public final class Cetak {
     // Struk thermal 58mm: baris teks monospace, tinggi kertas mengikuti jumlah baris.
     // Mengembalikan false bila user membatalkan dialog printer.
     public static boolean cetakBaris(final List<String> baris, String judul) throws PrinterException {
-        final Font font = new Font(Font.MONOSPACED, Font.PLAIN, 7);
-        final double tinggiBaris = 9, margin = 4;
+        // 6.5pt: 32 kolom = ~125pt, muat di driver 58mm yang hanya mencetak 48mm (~136pt).
+        final Font font = new Font(Font.MONOSPACED, Font.PLAIN, 1).deriveFont(6.5f);
+        final double tinggiBaris = 8.5, margin = 4;
         double lebar = 58 * PT_PER_MM;
         double tinggi = baris.size() * tinggiBaris + 2 * margin;
 
