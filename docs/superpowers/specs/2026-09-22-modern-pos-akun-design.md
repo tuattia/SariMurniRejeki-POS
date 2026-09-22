@@ -63,9 +63,10 @@ Aturan DB (`SQLException`, dalam transaksi):
 Password disimpan `enkripsi.sha256(password)` (sama dengan login saat ini).
 `authenticate` tidak berubah.
 
-## C. `UserView` (Kelola User)
+## C. `UserDialog` (Kelola User)
 
-- Sidebar standar + tabel Nama, Username, Hak Akses.
+- Dialog modal (bukan layar dengan sidebar — sidebar di-copy di tiap view,
+  dialog menghindari duplikasi kelima) berisi tabel Nama, Username, Hak Akses.
 - Tombol: Tambah (nama, username, password, role), Edit (nama, role;
   username tidak bisa diubah), Reset Password (password baru + konfirmasi
   harus sama), Hapus (konfirmasi).
