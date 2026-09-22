@@ -1,20 +1,14 @@
 package modern_pos.controller;
-import java.util.List;
-import javax.swing.SwingWorker;
 import modern_pos.dao.BarangDAO;
 import modern_pos.dao.StokDAO;
-import modern_pos.model.StockMovement;
 import modern_pos.model.Barang;
+import modern_pos.utils.Async;
 import modern_pos.view.StockView;
 
 public class StockController {
     private StockView view;
-    private final BarangDAO dao;
+    private final BarangDAO dao = new BarangDAO();
     private final StokDAO stokDAO = new StokDAO();
-
-    public StockController() {
-        this.dao = new BarangDAO();
-    }
 
     public void setView(StockView view) {
         this.view = view;
@@ -23,98 +17,34 @@ public class StockController {
 
     public void loadData(final String keyword) {
         view.setLoading(true);
-        SwingWorker<List<Barang>, Void> worker = new SwingWorker<List<Barang>, Void>() {
-            @Override protected List<Barang> doInBackground() throws Exception {
-                return dao.getAllBarang(keyword);
-            }
-            @Override protected void done() {
-                view.setLoading(false);
-                try {
-                    view.populateTable(get());
-                } catch (Exception ex) {
-                    view.showError("Gagal memuat data stock: " + ex.getMessage());
-                }
-            }
-        };
-        worker.execute();
+        Async.ambil(() -> dao.getAllBarang(keyword),
+                list -> { view.setLoading(false); view.populateTable(list); },
+                msg -> { view.setLoading(false); view.showError("Gagal memuat data stock: " + msg); });
     }
 
     public void restock(final String kode, final int qty, final String ket) {
-        SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
-            @Override protected Void doInBackground() throws Exception {
-                stokDAO.restock(kode, qty, ket);
-                return null;
-            }
-            @Override protected void done() {
-                try {
-                    get();
-                    view.showSuccess("Restock berhasil!");
-                } catch (Exception ex) {
-                    Throwable c = ex.getCause() != null ? ex.getCause() : ex;
-                    view.showError("Gagal restock: " + c.getMessage());
-                }
-                loadData("");
-            }
-        };
-        worker.execute();
+        Async.kerjakan(() -> stokDAO.restock(kode, qty, ket),
+                () -> { view.showSuccess("Restock berhasil!"); loadData(""); },
+                msg -> { view.showError("Gagal restock: " + msg); loadData(""); });
     }
 
     public void tampilRiwayat(final Barang b) {
-        SwingWorker<List<StockMovement>, Void> worker = new SwingWorker<List<StockMovement>, Void>() {
-            @Override protected List<StockMovement> doInBackground() throws Exception {
-                return stokDAO.riwayat(b.getKodeBarang());
-            }
-            @Override protected void done() {
-                try {
-                    view.showRiwayat(b, get());
-                } catch (Exception ex) {
-                    Throwable c = ex.getCause() != null ? ex.getCause() : ex;
-                    view.showError("Gagal memuat riwayat: " + c.getMessage());
-                }
-            }
-        };
-        worker.execute();
+        Async.ambil(() -> stokDAO.riwayat(b.getKodeBarang()), list -> view.showRiwayat(b, list),
+                msg -> view.showError("Gagal memuat riwayat: " + msg));
     }
 
     // lama == null berarti tambah barang baru.
     public void simpanBarang(final Barang baru, final Barang lama) {
-        SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
-            @Override protected Void doInBackground() throws Exception {
-                if (lama != null) dao.updateBarang(baru, lama.getStok());
-                else dao.tambahBarang(baru);
-                return null;
-            }
-            @Override protected void done() {
-                try {
-                    get();
-                    view.showSuccess("Data barang berhasil disimpan!");
-                    loadData("");
-                } catch (Exception ex) {
-                    Throwable c = ex.getCause() != null ? ex.getCause() : ex;
-                    view.showError("Gagal menyimpan: " + c.getMessage());
-                    loadData("");
-                }
-            }
-        };
-        worker.execute();
+        Async.kerjakan(() -> {
+            if (lama != null) dao.updateBarang(baru, lama.getStok());
+            else dao.tambahBarang(baru);
+        }, () -> { view.showSuccess("Data barang berhasil disimpan!"); loadData(""); },
+           msg -> { view.showError("Gagal menyimpan: " + msg); loadData(""); });
     }
 
     public void hapusBarang(final String kode) {
-        SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
-            @Override protected Void doInBackground() throws Exception {
-                dao.hapusBarang(kode);
-                return null;
-            }
-            @Override protected void done() {
-                try {
-                    get();
-                    view.showSuccess("Barang berhasil dihapus!");
-                    loadData("");
-                } catch (Exception ex) {
-                    view.showError("Gagal menghapus: " + ex.getMessage());
-                }
-            }
-        };
-        worker.execute();
+        Async.kerjakan(() -> dao.hapusBarang(kode),
+                () -> { view.showSuccess("Barang berhasil dihapus!"); loadData(""); },
+                msg -> view.showError("Gagal menghapus: " + msg));
     }
 }

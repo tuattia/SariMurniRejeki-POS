@@ -1,22 +1,20 @@
 package modern_pos.controller;
 import java.util.List;
-import javax.swing.SwingWorker;
 import modern_pos.dao.DashboardDAO;
 import modern_pos.dao.UtangDAO;
 import modern_pos.model.DashboardSummary;
 import modern_pos.model.User;
 import modern_pos.model.Utang;
+import modern_pos.utils.Async;
 import modern_pos.view.DashboardView;
 
 public class DashboardController {
     private DashboardView view;
-    private final UtangDAO utangDAO;
-    private final DashboardDAO dashboardDAO;
+    private final UtangDAO utangDAO = new UtangDAO();
+    private final DashboardDAO dashboardDAO = new DashboardDAO();
     private final User currentUser;
 
     public DashboardController(User user) {
-        this.utangDAO = new UtangDAO();
-        this.dashboardDAO = new DashboardDAO();
         this.currentUser = user;
     }
 
@@ -27,39 +25,21 @@ public class DashboardController {
     }
 
     public void loadData(String keyword) {
-        SwingWorker<DashboardDataBundle, Void> worker = new SwingWorker<DashboardDataBundle, Void>() {
-            @Override
-            protected DashboardDataBundle doInBackground() throws Exception {
-                DashboardDataBundle bundle = new DashboardDataBundle();
-                bundle.summary = dashboardDAO.getSummary();
-                bundle.utangList = utangDAO.getUtangList(keyword);
-                return bundle;
-            }
-            @Override
-            protected void done() {
-                try {
-                    DashboardDataBundle result = get();
-                    view.updateSummaryCards(result.summary);
-                    view.populateTable(result.utangList);
-                } catch (Exception ex) {
-                    view.showError("Gagal memuat data: " + ex.getMessage());
-                }
-            }
-        };
-        worker.execute();
+        final DashboardSummary[] summary = new DashboardSummary[1];
+        Async.ambil(() -> {
+            summary[0] = dashboardDAO.getSummary();
+            return utangDAO.getUtangList(keyword);
+        }, (List<Utang> utang) -> {
+            view.updateSummaryCards(summary[0]);
+            view.populateTable(utang);
+        }, msg -> view.showError("Gagal memuat data: " + msg));
     }
-    
+
     public void logout() {
         int conf = view.showConfirm("Apakah Anda yakin ingin logout?");
         if (conf == javax.swing.JOptionPane.YES_OPTION) {
             view.dispose();
             new modern_pos.view.LoginView().setVisible(true);
         }
-    }
-    
-    // Class internal untuk menggabungkan hasil background task
-    private class DashboardDataBundle {
-        DashboardSummary summary;
-        List<Utang> utangList;
     }
 }

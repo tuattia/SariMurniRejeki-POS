@@ -1,14 +1,14 @@
 package modern_pos.controller;
-import javax.swing.SwingWorker;
 import modern_pos.dao.UserDAO;
-import modern_pos.model.User;
-import modern_pos.view.LoginView;
+import modern_pos.utils.Async;
+import modern_pos.utils.Session;
 import modern_pos.view.DashboardView;
+import modern_pos.view.LoginView;
 
 public class LoginController {
     private LoginView view;
-    private final UserDAO userDAO;
-    public LoginController() { this.userDAO = new UserDAO(); }
+    private final UserDAO userDAO = new UserDAO();
+
     public void setView(LoginView view) { this.view = view; }
 
     public void handleLogin() {
@@ -20,29 +20,14 @@ public class LoginController {
             return;
         }
         view.setLoading(true);
-        SwingWorker<User, Void> worker = new SwingWorker<User, Void>() {
-            @Override
-            protected User doInBackground() throws Exception {
-                return userDAO.authenticate(username, password);
-            }
-            @Override
-            protected void done() {
-                view.setLoading(false);
-                try {
-                    User loggedInUser = get();
-                    modern_pos.utils.Session.currentUser = loggedInUser;
-                    view.dispose(); 
-                    
-                    // Buka Dashboard Modern
-                    DashboardController dashCtrl = new DashboardController(loggedInUser);
-                    new DashboardView(dashCtrl).setVisible(true);
-                    
-                } catch (Exception ex) {
-                    String cause = (ex.getCause() != null) ? ex.getCause().getMessage() : ex.getMessage();
-                    view.showError(cause);
-                }
-            }
-        };
-        worker.execute();
+        Async.ambil(() -> userDAO.authenticate(username, password), user -> {
+            view.setLoading(false);
+            Session.currentUser = user;
+            view.dispose();
+            new DashboardView(new DashboardController(user)).setVisible(true);
+        }, msg -> {
+            view.setLoading(false);
+            view.showError(msg);
+        });
     }
 }

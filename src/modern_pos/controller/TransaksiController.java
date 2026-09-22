@@ -1,8 +1,8 @@
 package modern_pos.controller;
 import java.util.ArrayList;
 import java.util.List;
-import javax.swing.SwingWorker;
 import modern_pos.dao.TransaksiDAO;
+import modern_pos.utils.Async;
 import modern_pos.dao.BarangDAO;
 import modern_pos.model.Struk;
 import java.sql.SQLException;
@@ -27,19 +27,8 @@ public class TransaksiController {
     }
 
     public void loadBarang(String keyword) {
-        SwingWorker<List<Barang>, Void> worker = new SwingWorker<List<Barang>, Void>() {
-            @Override protected List<Barang> doInBackground() throws Exception {
-                return barangDAO.getAllBarang(keyword);
-            }
-            @Override protected void done() {
-                try {
-                    view.populateTableBarang(get());
-                } catch (Exception ex) {
-                    view.showError("Gagal memuat barang: " + ex.getMessage());
-                }
-            }
-        };
-        worker.execute();
+        Async.ambil(() -> barangDAO.getAllBarang(keyword), view::populateTableBarang,
+                msg -> view.showError("Gagal memuat barang: " + msg));
     }
 
     public void addToCart(Barang barang, int qty) {
@@ -79,7 +68,6 @@ public class TransaksiController {
         view.updateTotal(total);
     }
 
-    // Menggunakan kata kunci final agar lolos validasi Java 8 Background Thread
     public void processPayment(final int bayar, final String pelanggan) {
         if (cart.isEmpty()) {
             view.showError("Keranjang masih kosong!");
@@ -90,46 +78,38 @@ public class TransaksiController {
         int tempTotal = 0;
         for (CartItem item : cart) tempTotal += item.getSubtotal();
         
-        final int finalTotal = tempTotal; // Variable ini tidak berubah, aman untuk SwingWorker
+        final int finalTotal = tempTotal;
         
         if (bayar < finalTotal) {
             view.showError("Uang bayar kurang!");
             return;
         }
 
-        final int kembali = bayar - finalTotal; // Aman untuk SwingWorker
+        final int kembali = bayar - finalTotal;
         
         view.setLoading(true);
-        SwingWorker<Struk, Void> worker = new SwingWorker<Struk, Void>() {
-            private String strukGagal;
-
-            @Override protected Struk doInBackground() throws Exception {
-                String kode = dao.simpanTransaksi(cart, finalTotal, bayar, kembali, pelanggan);
-                try {
-                    return dao.getStruk(kode);
-                } catch (SQLException e) {
-                    strukGagal = e.getMessage(); // transaksi sudah tersimpan; hanya struk yang gagal
-                    return null;
-                }
+        final String[] strukGagal = new String[1];
+        Async.ambil(() -> {
+            String kode = dao.simpanTransaksi(cart, finalTotal, bayar, kembali, pelanggan);
+            try {
+                return dao.getStruk(kode);
+            } catch (SQLException e) {
+                strukGagal[0] = e.getMessage(); // transaksi sudah tersimpan; hanya struk yang gagal
+                return null;
             }
-            @Override protected void done() {
-                view.setLoading(false);
-                try {
-                    Struk struk = get();
-                    view.showSuccess("Transaksi Berhasil! Kembalian: Rp " + kembali);
-                    cart.clear();
-                    updateCartView();
-                    loadBarang("");
-                    view.resetForm();
-                    if (struk != null) view.showStruk(struk);
-                    else view.showError("Transaksi tersimpan, tapi struk gagal dimuat: " + strukGagal);
-                } catch (Exception ex) {
-                    Throwable c = ex.getCause() != null ? ex.getCause() : ex;
-                    view.showError("Gagal menyimpan: " + c.getMessage());
-                    loadBarang(""); // stok di layar mungkin basi
-                }
-            }
-        };
-        worker.execute();
+        }, (Struk struk) -> {
+            view.setLoading(false);
+            view.showSuccess("Transaksi Berhasil! Kembalian: Rp " + kembali);
+            cart.clear();
+            updateCartView();
+            loadBarang("");
+            view.resetForm();
+            if (struk != null) view.showStruk(struk);
+            else view.showError("Transaksi tersimpan, tapi struk gagal dimuat: " + strukGagal[0]);
+        }, msg -> {
+            view.setLoading(false);
+            view.showError("Gagal menyimpan: " + msg);
+            loadBarang(""); // stok di layar mungkin basi
+        });
     }
 }

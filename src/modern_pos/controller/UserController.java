@@ -1,9 +1,7 @@
 package modern_pos.controller;
 
-import java.util.List;
-import javax.swing.SwingWorker;
 import modern_pos.dao.UserDAO;
-import modern_pos.model.User;
+import modern_pos.utils.Async;
 import modern_pos.view.UserDialog;
 
 public class UserController {
@@ -15,32 +13,12 @@ public class UserController {
         muat();
     }
 
-    private static String pesan(Exception ex) {
-        Throwable c = ex.getCause() != null ? ex.getCause() : ex;
-        return c.getMessage() != null ? c.getMessage() : c.toString();
-    }
-
     public void muat() {
-        new SwingWorker<List<User>, Void>() {
-            @Override protected List<User> doInBackground() throws Exception { return dao.listUser(); }
-            @Override protected void done() {
-                try { view.tampilkan(get()); }
-                catch (Exception ex) { view.showError("Gagal memuat user: " + pesan(ex)); }
-            }
-        }.execute();
+        Async.ambil(dao::listUser, view::tampilkan, msg -> view.showError("Gagal memuat user: " + msg));
     }
 
-    private interface Aksi { void jalan() throws Exception; }
-
-    private void jalankan(final Aksi aksi, final String sukses) {
-        new SwingWorker<Void, Void>() {
-            @Override protected Void doInBackground() throws Exception { aksi.jalan(); return null; }
-            @Override protected void done() {
-                try { get(); view.showSuccess(sukses); }
-                catch (Exception ex) { view.showError(pesan(ex)); }
-                muat();
-            }
-        }.execute();
+    private void jalankan(Async.Aksi aksi, String sukses) {
+        Async.kerjakan(aksi, () -> { view.showSuccess(sukses); muat(); }, msg -> { view.showError(msg); muat(); });
     }
 
     public void tambah(String nama, String username, String password, String role) {
